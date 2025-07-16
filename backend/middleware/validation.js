@@ -47,11 +47,41 @@ const validateLogin = [
 // Destination validation
 const validateDestination = [
   body('title').trim().isLength({ min: 3, max: 255 }).withMessage('Judul harus 3-255 karakter'),
-  body('short_description').trim().isLength({ min: 10, max: 500 }).withMessage('Deskripsi singkat harus 10-500 karakter'),
-  body('description').trim().isLength({ min: 50 }).withMessage('Deskripsi minimal 50 karakter'),
+  body('shortDescription').trim().isLength({ min: 10, max: 500 }).withMessage('Deskripsi singkat harus 10-500 karakter'),
+  body('description').optional().trim().isLength({ min: 50 }).withMessage('Deskripsi minimal 50 karakter'),
   body('category').isIn(destinationCategories).withMessage('Kategori tidak valid'),
-  body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage('Latitude tidak valid'),
-  body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage('Longitude tidak valid'),
+  body('image').optional().isURL().withMessage('URL gambar utama tidak valid'),
+  body('location')
+    .optional()
+    .custom(location => {
+      if (
+        location &&
+        (typeof location.lat !== 'number' || typeof location.lng !== 'number')
+      ) {
+        throw new Error('Lokasi harus berisi lat dan lng yang berupa angka');
+      }
+      if (
+        location &&
+        (location.lat < -90 || location.lat > 90 || location.lng < -180 || location.lng > 180)
+      ) {
+        throw new Error('Koordinat lokasi tidak valid');
+      }
+      return true;
+    }),
+  body('gallery')
+    .optional()
+    .custom(gallery => {
+      if (gallery === null) return true;
+      if (!Array.isArray(gallery)) {
+        throw new Error('Galeri harus berupa array');
+      }
+      for (const url of gallery) {
+        if (typeof url !== 'string' || !/^https?:\/\/.+/.test(url)) {
+          throw new Error('Semua item galeri harus berupa URL valid');
+        }
+      }
+      return true;
+    }),
   handleValidationErrors
 ];
 

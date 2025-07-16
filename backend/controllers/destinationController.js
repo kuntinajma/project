@@ -1,4 +1,24 @@
 const { pool } = require('../config/database');
+const DESTINATION_CATEGORIES = require("../constants/destinationCategories");
+
+const destinationCategories = Object.values(DESTINATION_CATEGORIES);
+
+// format raw db data to desired JSON output
+function formatDestination(row) {
+  return {
+    id: String(row.id),
+    title: row.title,
+    shortDescription: row.short_description,
+    description: row.description,
+    category: row.category,
+    image: row.image ?? null,
+    location: row.latitude != null && row.longitude != null
+      ? { lat: Number(row.latitude), lng: Number(row.longitude) }
+      : null,
+    gallery: row.gallery ? JSON.parse(row.gallery) : null
+  };
+}
+
 
 // Get all destinations
 const getAllDestinations = async (req, res) => {
@@ -9,7 +29,7 @@ const getAllDestinations = async (req, res) => {
     let whereClause = 'WHERE 1=1';
     let params = [];
 
-    if (category) {
+    if (category && destinationCategories.includes(category)) {
       whereClause += ' AND category = ?';
       params.push(category);
     }
@@ -26,10 +46,13 @@ const getAllDestinations = async (req, res) => {
     );
 
     // Get destinations with pagination
-    const [destinations] = await pool.execute(
+    const [rows] = await pool.execute(
       `SELECT * FROM destinations ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [...params, parseInt(limit), offset]
     );
+
+    // Format each row
+    const destinations = rows.map(formatDestination);
 
     const total = countResult[0].total;
     const totalPages = Math.ceil(total / limit);
@@ -74,7 +97,7 @@ const getDestinationById = async (req, res) => {
 
     res.json({
       success: true,
-      data: destinations[0]
+      data: formatDestination(destinations[0])
     });
   } catch (error) {
     console.error('Get destination error:', error);
@@ -89,27 +112,39 @@ const getDestinationById = async (req, res) => {
 const createDestination = async (req, res) => {
   try {
     const {
-      name,
-      slug,
-      description,
-      short_description,
-      location,
-      latitude,
-      longitude,
-      image_url,
-      gallery,
-      facilities,
-      opening_hours,
-      ticket_price,
+      title,
+      shortDescription,
+      description = null,
       category,
-      is_featured,
-      is_active
+      image = null,
+      location = null,
+      gallery = null
     } = req.body;
 
+    const latitude = location?.lat ?? null;
+    const longitude = location?.lng ?? null;
+
     const [result] = await pool.execute(
-      `INSERT INTO destinations (name, slug, description, short_description, location, latitude, longitude, image_url, gallery, facilities, opening_hours, ticket_price, category, is_featured, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, slug, description, short_description, location, latitude, longitude, image_url, JSON.stringify(gallery || []), JSON.stringify(facilities || []), opening_hours, ticket_price || 0, category, is_featured || false, is_active !== false]
+      `INSERT INTO destinations (
+        title,
+        short_description,
+        description,
+        category,
+        image,
+        latitude,
+        longitude,
+        gallery
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        title,
+        shortDescription,
+        description,
+        category,
+        image,
+        latitude,
+        longitude,
+        gallery ? JSON.stringify(gallery) : null
+      ]
     );
 
     const [newDestination] = await pool.execute(
@@ -120,7 +155,7 @@ const createDestination = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Destinasi berhasil dibuat',
-      data: newDestination[0]
+      data: formatDestination(newDestination[0])
     });
   } catch (error) {
     console.error('Create destination error:', error);
@@ -135,39 +170,53 @@ const createDestination = async (req, res) => {
 const updateDestination = async (req, res) => {
   try {
     const { id } = req.params;
+
     const {
-      name,
-      slug,
-      description,
-      short_description,
-      location,
-      latitude,
-      longitude,
-      image_url,
-      gallery,
-      facilities,
-      opening_hours,
-      ticket_price,
+      title,
+      shortDescription,
+      description = null,
       category,
-      is_featured,
-      is_active
+      image = null,
+      location = null,
+      gallery = null
     } = req.body;
 
+    const latitude = location?.lat ?? null;
+    const longitude = location?.lng ?? null;
+
     await pool.execute(
-      `UPDATE destinations SET name = ?, slug = ?, description = ?, short_description = ?, location = ?, latitude = ?, longitude = ?, image_url = ?, gallery = ?, facilities = ?, opening_hours = ?, ticket_price = ?, category = ?, is_featured = ?, is_active = ?
+      `UPDATE destinations
+       SET title = ?, short_description = ?, description = ?, category = ?, image = ?, latitude = ?, longitude = ?, gallery = ?
        WHERE id = ?`,
-      [name, slug, description, short_description, location, latitude, longitude, image_url, JSON.stringify(gallery || []), JSON.stringify(facilities || []), opening_hours, ticket_price || 0, category, is_featured || false, is_active !== false, id]
+      [
+        title,
+        shortDescription,
+        description,
+        category,
+        image,
+        latitude,
+        longitude,
+        gallery ? JSON.stringify(gallery) : null,
+        id
+      ]
     );
 
-    const [updatedDestination] = await pool.execute(
+    const [rows] = await pool.execute(
       'SELECT * FROM destinations WHERE id = ?',
       [id]
     );
 
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Destinasi tidak ditemukan'
+      });
+    }
+
     res.json({
       success: true,
       message: 'Destinasi berhasil diupdate',
-      data: updatedDestination[0]
+      data: formatDestination(rows[0])
     });
   } catch (error) {
     console.error('Update destination error:', error);
