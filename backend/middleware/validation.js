@@ -1,4 +1,7 @@
 const { body, param, query, validationResult } = require('express-validator');
+const USER_ROLE = require("../constants/roles");
+const DESTINATION_CATEGORIES = require("../constants/destinationCategories");
+const ARTICLE_CATEGORIES = require('../constants/articleCategories');
 
 // Handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -13,22 +16,22 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
+const roles = Object.values(USER_ROLE);
+const destinationCategories = Object.values(DESTINATION_CATEGORIES);
+const articleCategories = Object.values(ARTICLE_CATEGORIES);
+
 // User validation rules
 const validateUser = [
   body('name').trim().isLength({ min: 2, max: 255 }).withMessage('Nama harus 2-255 karakter'),
   body('email').isEmail().normalizeEmail().withMessage('Email tidak valid'),
   body('password').isLength({ min: 6 }).withMessage('Password minimal 6 karakter'),
-  body('role').optional().isIn(['superadmin', 'admin', 'msme', 'contributor']).withMessage('Role tidak valid'),
-  body('phone').optional().isMobilePhone('id-ID').withMessage('Nomor telepon tidak valid'),
+  body('role').optional().isIn(roles).withMessage('Role tidak valid'),
   handleValidationErrors
 ];
 
 const validateUserUpdate = [
   body('name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('Nama harus 2-255 karakter'),
-  body('email').optional().isEmail().normalizeEmail().withMessage('Email tidak valid'),
-  body('phone').optional().isMobilePhone('id-ID').withMessage('Nomor telepon tidak valid'),
-  body('university').optional().trim().isLength({ max: 255 }).withMessage('Universitas maksimal 255 karakter'),
-  body('major').optional().trim().isLength({ max: 255 }).withMessage('Jurusan maksimal 255 karakter'),
+  body('role').optional().isIn(roles).withMessage('Role tidak valid'),
   handleValidationErrors
 ];
 
@@ -44,7 +47,7 @@ const validateDestination = [
   body('title').trim().isLength({ min: 3, max: 255 }).withMessage('Judul harus 3-255 karakter'),
   body('short_description').trim().isLength({ min: 10, max: 500 }).withMessage('Deskripsi singkat harus 10-500 karakter'),
   body('description').trim().isLength({ min: 50 }).withMessage('Deskripsi minimal 50 karakter'),
-  body('category').isIn(['beaches', 'culture', 'nature', 'adventure']).withMessage('Kategori tidak valid'),
+  body('category').isIn(destinationCategories).withMessage('Kategori tidak valid'),
   body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage('Latitude tidak valid'),
   body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage('Longitude tidak valid'),
   handleValidationErrors
@@ -80,7 +83,7 @@ const validateArticle = [
   body('title').trim().isLength({ min: 5, max: 255 }).withMessage('Judul harus 5-255 karakter'),
   body('excerpt').trim().isLength({ min: 20, max: 500 }).withMessage('Excerpt harus 20-500 karakter'),
   body('content').trim().isLength({ min: 100 }).withMessage('Konten minimal 100 karakter'),
-  body('category').isIn(['tips', 'tourism', 'culture', 'msmes', 'environment']).withMessage('Kategori tidak valid'),
+  body('category').isIn(articleCategories).withMessage('Kategori tidak valid'),
   handleValidationErrors
 ];
 
