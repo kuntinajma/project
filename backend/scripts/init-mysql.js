@@ -25,7 +25,7 @@ async function initializeDatabase() {
     console.log(`✅ Database '${dbName}' created/verified`);
 
     // Read and execute schema
-    const schemaPath = path.join(__dirname, '../database/mysql-schema.sql');
+    const schemaPath = path.join(__dirname, '../database/schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
     
     // Split schema into individual statements
@@ -54,6 +54,7 @@ async function initializeDatabase() {
   }
 }
 
+// this is not following the db schema. fix later
 async function insertSampleData(connection) {
   console.log('🌱 Inserting sample data...');
 
