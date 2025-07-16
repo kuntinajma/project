@@ -82,7 +82,7 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const [users] = await pool.execute(
-      'SELECT id, email, name, role, created_at FROM users WHERE id = ?',
+      'SELECT id, email, password, name, role, is_active FROM users WHERE id = ?',
       [req.user.id]
     );
 
@@ -92,6 +92,9 @@ const getProfile = async (req, res) => {
         message: 'User tidak ditemukan'
       });
     }
+
+    // Remove password from response
+    delete user.password;
 
     res.json({
       success: true,

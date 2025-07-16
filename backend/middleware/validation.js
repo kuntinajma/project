@@ -26,12 +26,14 @@ const validateUser = [
   body('email').isEmail().normalizeEmail().withMessage('Email tidak valid'),
   body('password').isLength({ min: 6 }).withMessage('Password minimal 6 karakter'),
   body('role').optional().isIn(roles).withMessage('Role tidak valid'),
+  body('is_active').optional().toBoolean(),
   handleValidationErrors
 ];
 
 const validateUserUpdate = [
   body('name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('Nama harus 2-255 karakter'),
   body('role').optional().isIn(roles).withMessage('Role tidak valid'),
+  body('is_active').optional().toBoolean(),
   handleValidationErrors
 ];
 
