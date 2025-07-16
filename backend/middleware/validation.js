@@ -91,10 +91,12 @@ const validateTourPackage = [
   body('description').trim().isLength({ min: 50 }).withMessage('Deskripsi minimal 50 karakter'),
   body('price').isFloat({ min: 0 }).withMessage('Harga harus angka positif'),
   body('duration').trim().notEmpty().withMessage('Durasi diperlukan'),
-  body('min_persons').isInt({ min: 1 }).withMessage('Minimal peserta harus angka positif'),
-  body('max_persons').optional().isInt({ min: 1 }).withMessage('Maksimal peserta harus angka positif'),
-  body('whatsapp_contact').isMobilePhone('id-ID').withMessage('Nomor WhatsApp tidak valid'),
+  body('minPersons').isInt({ min: 1 }).withMessage('Minimal peserta harus angka positif'),
+  body('maxPersons').optional().isInt({ min: 1 }).withMessage('Maksimal peserta harus angka positif'),
+  body('whatsappContact').isMobilePhone('id-ID').withMessage('Nomor WhatsApp tidak valid'),
   body('facilities').isArray({ min: 1 }).withMessage('Minimal 1 fasilitas diperlukan'),
+  body('image').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('popular').optional().isBoolean().withMessage('Popular harus boolean'),
   handleValidationErrors
 ];
 

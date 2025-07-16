@@ -1,5 +1,22 @@
 const { pool } = require('../config/database');
 
+function formatTourPackage(row) {
+  return {
+    id: String(row.id),
+    name: row.name,
+    description: row.description,
+    price: row.price,
+    duration: row.duration,
+    minPersons: row.min_persons,
+    maxPersons: row.max_persons ?? null,
+    whatsappContact: row.whatsapp_contact,
+    image: row.image ?? null,
+    facilities: row.facilities ? JSON.parse(row.facilities) : [],
+    popular: !!row.popular
+  };
+}
+
+
 // Get all tour packages
 const getAllPackages = async (req, res) => {
   try {
@@ -21,10 +38,12 @@ const getAllPackages = async (req, res) => {
     );
 
     // Get packages with pagination
-    const [packages] = await pool.execute(
+    const [rows] = await pool.execute(
       `SELECT * FROM tour_packages ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [...params, parseInt(limit), offset]
     );
+
+    const packages = rows.map(formatTourPackage);
 
     const total = countResult[0].total;
     const totalPages = Math.ceil(total / limit);
@@ -69,7 +88,7 @@ const getPackageById = async (req, res) => {
 
     res.json({
       success: true,
-      data: packages[0]
+      data: formatTourPackage(packages[0])
     });
   } catch (error) {
     console.error('Get package error:', error);
@@ -85,29 +104,36 @@ const createPackage = async (req, res) => {
   try {
     const {
       name,
-      slug,
       description,
-      short_description,
       price,
       duration,
-      max_participants,
-      min_participants,
-      includes,
-      excludes,
-      itinerary,
-      image_url,
-      gallery,
-      is_featured,
-      is_active
+      minPersons,
+      maxPersons,
+      whatsappContact,
+      facilities,
+      image = null,
+      popular = false
     } = req.body;
 
     const [result] = await pool.execute(
-      `INSERT INTO tour_packages (name, slug, description, short_description, price, duration, max_participants, min_participants, includes, excludes, itinerary, image_url, gallery, is_featured, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, slug, description, short_description, price, duration, max_participants || 10, min_participants || 2, JSON.stringify(includes || []), JSON.stringify(excludes || []), JSON.stringify(itinerary || []), image_url, JSON.stringify(gallery || []), is_featured || false, is_active !== false]
+      `INSERT INTO tour_packages 
+        (name, description, price, duration, min_persons, max_persons, whatsapp_contact, facilities, image, popular)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name,
+        description,
+        price,
+        duration,
+        minPersons,
+        maxPersons ?? null,
+        whatsappContact,
+        JSON.stringify(facilities),
+        image,
+        popular
+      ]
     );
 
-    const [newPackage] = await pool.execute(
+    const [rows] = await pool.execute(
       'SELECT * FROM tour_packages WHERE id = ?',
       [result.insertId]
     );
@@ -115,7 +141,7 @@ const createPackage = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Paket wisata berhasil dibuat',
-      data: newPackage[0]
+      data: formatTourPackage(rows[0])
     });
   } catch (error) {
     console.error('Create package error:', error);
@@ -132,37 +158,52 @@ const updatePackage = async (req, res) => {
     const { id } = req.params;
     const {
       name,
-      slug,
       description,
-      short_description,
       price,
       duration,
-      max_participants,
-      min_participants,
-      includes,
-      excludes,
-      itinerary,
-      image_url,
-      gallery,
-      is_featured,
-      is_active
+      minPersons,
+      maxPersons,
+      whatsappContact,
+      facilities,
+      image = null,
+      popular = false
     } = req.body;
 
     await pool.execute(
-      `UPDATE tour_packages SET name = ?, slug = ?, description = ?, short_description = ?, price = ?, duration = ?, max_participants = ?, min_participants = ?, includes = ?, excludes = ?, itinerary = ?, image_url = ?, gallery = ?, is_featured = ?, is_active = ?
+      `UPDATE tour_packages 
+       SET name = ?, description = ?, price = ?, duration = ?, min_persons = ?, max_persons = ?, whatsapp_contact = ?, facilities = ?, image = ?, popular = ?
        WHERE id = ?`,
-      [name, slug, description, short_description, price, duration, max_participants || 10, min_participants || 2, JSON.stringify(includes || []), JSON.stringify(excludes || []), JSON.stringify(itinerary || []), image_url, JSON.stringify(gallery || []), is_featured || false, is_active !== false, id]
+      [
+        name,
+        description,
+        price,
+        duration,
+        minPersons,
+        maxPersons ?? null,
+        whatsappContact,
+        JSON.stringify(facilities),
+        image,
+        popular,
+        id
+      ]
     );
 
-    const [updatedPackage] = await pool.execute(
+    const [rows] = await pool.execute(
       'SELECT * FROM tour_packages WHERE id = ?',
       [id]
     );
 
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Paket wisata tidak ditemukan'
+      });
+    }
+
     res.json({
       success: true,
       message: 'Paket wisata berhasil diupdate',
-      data: updatedPackage[0]
+      data: formatTourPackage(rows[0])
     });
   } catch (error) {
     console.error('Update package error:', error);
