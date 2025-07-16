@@ -2,6 +2,7 @@ const { body, param, query, validationResult } = require('express-validator');
 const USER_ROLE = require("../constants/roles");
 const DESTINATION_CATEGORIES = require("../constants/destinationCategories");
 const ARTICLE_CATEGORIES = require('../constants/articleCategories');
+const CULTURE_CATEGORIES = require('../constants/cultureCategories');
 
 // Handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -19,6 +20,8 @@ const handleValidationErrors = (req, res, next) => {
 const roles = Object.values(USER_ROLE);
 const destinationCategories = Object.values(DESTINATION_CATEGORIES);
 const articleCategories = Object.values(ARTICLE_CATEGORIES);
+const cultureCategories = Object.values(CULTURE_CATEGORIES);
+
 
 // User validation rules
 const validateUser = [
@@ -100,6 +103,29 @@ const validateTourPackage = [
   handleValidationErrors
 ];
 
+// culture
+const validateCulture = [
+  body('title').trim().isLength({ min: 3, max: 255 }).withMessage('Judul harus 3-255 karakter'),
+  body('description').trim().isLength({ min: 10 }).withMessage('Deskripsi minimal 10 karakter'),
+  body('category').isIn(cultureCategories).withMessage('Kategori tidak valid'),
+  body('image').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('gallery')
+    .optional()
+    .custom(gallery => {
+      if (gallery === null) return true;
+      if (!Array.isArray(gallery)) {
+        throw new Error('Galeri harus berupa array');
+      }
+      for (const url of gallery) {
+        if (typeof url !== 'string' || !/^https?:\/\/.+/.test(url)) {
+          throw new Error('Semua item galeri harus berupa URL valid');
+        }
+      }
+      return true;
+    }),
+  handleValidationErrors
+];
+
 // Product validation
 const validateProduct = [
   body('name').trim().isLength({ min: 3, max: 255 }).withMessage('Nama produk harus 3-255 karakter'),
@@ -151,6 +177,7 @@ module.exports = {
   validateLogin,
   validateDestination,
   validateTourPackage,
+  validateCulture,
   validateProduct,
   validateArticle,
   validateMSME,
