@@ -138,14 +138,16 @@ const validateMSME = [
 
 // Product validation
 const validateProduct = [
-  body('name').trim().isLength({ min: 3, max: 255 }).withMessage('Nama produk harus 3-255 karakter'),
-  body('description').trim().isLength({ min: 20 }).withMessage('Deskripsi minimal 20 karakter'),
-  body('price').isFloat({ min: 0 }).withMessage('Harga harus angka positif'),
-  body('stock_quantity').optional().isInt({ min: 0 }).withMessage('Stok harus angka non-negatif'),
-  body('min_order').optional().isInt({ min: 1 }).withMessage('Minimal order harus angka positif'),
-  body('material').optional().trim().isLength({ max: 255 }).withMessage('Material maksimal 255 karakter'),
-  body('delivery_time').optional().trim().isLength({ max: 100 }).withMessage('Waktu pengiriman maksimal 100 karakter'),
-  handleValidationErrors
+  body("name").trim().isLength({min: 3, max: 255}).withMessage("Nama produk harus 3-255 karakter"),
+  body('price').isFloat({min: 0}).withMessage('Harga harus berupa angka positif'),
+  body('image').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('description').trim().isLength({min: 10, max: 1000}).withMessage('Deskripsi harus 10-1000 karakter'),
+  body('material').trim().isLength({min: 3, max: 255}).withMessage('Material harus 3-255 karakter'),
+  body('durability').trim().isLength({min: 3, max: 255}).withMessage('Durabilitas harus 3-255 karakter'),
+  body('deliveryTime').trim().isLength({min: 3, max: 255}).withMessage('Waktu pengiriman harus 3-255 karakter'),
+  body('msme_id').isInt({min: 1}).withMessage('MSME ID harus berupa angka positif'),
+  body('relatedProducts').optional().isArray().withMessage('Related products harus berupa array'),
+  body('relatedProducts.*').optional().isInt({min: 1}).withMessage('Related product ID harus berupa angka positif')
 ];
 
 // Article validation
