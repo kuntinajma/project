@@ -126,6 +126,16 @@ const validateCulture = [
   handleValidationErrors
 ];
 
+//MSME
+const validateMSME = [
+  body("brand").trim().isLength({min: 3, max: 255}).withMessage("Nama brand harus 3-255 karakter"),
+  body('description').optional().trim().isLength({ max: 1000 }).withMessage('Deskripsi maksimal 1000 karakter'),
+  body('phone').optional().isMobilePhone('id-ID').withMessage('Nomor telepon tidak valid'),
+  body('instagram').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('shopee').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('whatsapp').optional().isMobilePhone('id-ID').withMessage('Nomor WhatsApp tidak valid'),
+]
+
 // Product validation
 const validateProduct = [
   body('name').trim().isLength({ min: 3, max: 255 }).withMessage('Nama produk harus 3-255 karakter'),
@@ -144,17 +154,6 @@ const validateArticle = [
   body('excerpt').trim().isLength({ min: 20, max: 500 }).withMessage('Excerpt harus 20-500 karakter'),
   body('content').trim().isLength({ min: 100 }).withMessage('Konten minimal 100 karakter'),
   body('category').isIn(articleCategories).withMessage('Kategori tidak valid'),
-  handleValidationErrors
-];
-
-// MSME validation
-const validateMSME = [
-  body('business_name').trim().isLength({ min: 3, max: 255 }).withMessage('Nama bisnis harus 3-255 karakter'),
-  body('business_type').optional().trim().isLength({ max: 100 }).withMessage('Tipe bisnis maksimal 100 karakter'),
-  body('description').optional().trim().isLength({ max: 1000 }).withMessage('Deskripsi maksimal 1000 karakter'),
-  body('phone').optional().isMobilePhone('id-ID').withMessage('Nomor telepon tidak valid'),
-  body('whatsapp').optional().isMobilePhone('id-ID').withMessage('Nomor WhatsApp tidak valid'),
-  body('email').optional().isEmail().withMessage('Email tidak valid'),
   handleValidationErrors
 ];
 

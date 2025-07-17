@@ -1,4 +1,4 @@
-import { Destination, TourPackage, CulturalContent, MSMEProduct, Article, Testimonial, Transportation, Amenity } from '../types';
+import { Destination, TourPackage, CulturalContent, MSMEProduct, Article, Testimonial, Transportation, Amenity, MSME } from '../types';
 
 export const destinations: Destination[] = [
   {
@@ -89,6 +89,18 @@ export const culturalContent: CulturalContent[] = [
   },
 ];
 
+export const msme: MSME[] = [
+  {
+    id: "1",
+    brand : "UD Laiya",
+    description: "usaha dagang keren",
+    phone: "09876544326",
+    instagram: "https://instagram.com/laiya/",
+    shopee: "https://shopee.co.id/seller/laiya",
+    whatsapp: "09877631132",
+    user_id: "1"
+  }
+]; 
 export const msmeProducts: MSMEProduct[] = [
   {
     id: '1',
@@ -99,6 +111,7 @@ export const msmeProducts: MSMEProduct[] = [
     material: 'Tempurung kelapa, serat alami',
     durability: '5+ tahun dengan perawatan yang tepat',
     deliveryTime: '3-5 hari kerja',
+    msme_id: "1",
     sellerInfo: {
       brand: 'Kerajinan Laiya',
       whatsapp: '+6281234567890',
