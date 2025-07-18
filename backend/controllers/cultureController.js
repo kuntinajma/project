@@ -1,5 +1,16 @@
 const { pool } = require('../config/database');
 
+function formatCulture(row) {
+  return {
+    id: String(row.id),
+    title: row.title,
+    description: row.description,
+    image: row.image ?? null,
+    category: row.category,
+    gallery: row.gallery ? JSON.parse(row.gallery) : []
+  };
+}
+
 // Get all culture
 const getAllCulture = async (req, res) => {
   try {
@@ -21,23 +32,24 @@ const getAllCulture = async (req, res) => {
 
     // Get total count
     const [countResult] = await pool.execute(
-      `SELECT COUNT(*) as total FROM culture ${whereClause}`,
+      `SELECT COUNT(*) as total FROM cultures ${whereClause}`,
       params
     );
 
     // Get culture with pagination
-    const [culture] = await pool.execute(
-      `SELECT * FROM culture ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    const [rows] = await pool.execute(
+      `SELECT * FROM cultures ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [...params, parseInt(limit), offset]
     );
 
+    const cultures = rows.map(formatCulture);
     const total = countResult[0].total;
     const totalPages = Math.ceil(total / limit);
 
     res.json({
       success: true,
       data: {
-        culture,
+        cultures,
         pagination: {
           currentPage: parseInt(page),
           totalPages,
@@ -61,7 +73,7 @@ const getCultureById = async (req, res) => {
     const { id } = req.params;
 
     const [culture] = await pool.execute(
-      'SELECT * FROM culture WHERE id = ?',
+      'SELECT * FROM cultures WHERE id = ?',
       [id]
     );
 
@@ -74,7 +86,7 @@ const getCultureById = async (req, res) => {
 
     res.json({
       success: true,
-      data: culture[0]
+      data: formatCulture(culture[0])
     });
   } catch (error) {
     console.error('Get culture error:', error);
@@ -90,34 +102,27 @@ const createCulture = async (req, res) => {
   try {
     const {
       title,
-      slug,
       description,
-      short_description,
+      image = null,
       category,
-      image_url,
-      gallery,
-      video_url,
-      history,
-      significance,
-      is_featured,
-      is_active
+      gallery = []
     } = req.body;
 
     const [result] = await pool.execute(
-      `INSERT INTO culture (title, slug, description, short_description, category, image_url, gallery, video_url, history, significance, is_featured, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, slug, description, short_description, category, image_url, JSON.stringify(gallery || []), video_url, history, significance, is_featured || false, is_active !== false]
+      `INSERT INTO cultures (title, description, image, category, gallery)
+       VALUES (?, ?, ?, ?, ?)`,
+      [title, description, image, category, JSON.stringify(gallery)]
     );
 
-    const [newCulture] = await pool.execute(
-      'SELECT * FROM culture WHERE id = ?',
+    const [rows] = await pool.execute(
+      'SELECT * FROM cultures WHERE id = ?',
       [result.insertId]
     );
 
     res.status(201).json({
       success: true,
       message: 'Budaya berhasil dibuat',
-      data: newCulture[0]
+      data: formatCulture(rows[0])
     });
   } catch (error) {
     console.error('Create culture error:', error);
@@ -134,34 +139,28 @@ const updateCulture = async (req, res) => {
     const { id } = req.params;
     const {
       title,
-      slug,
       description,
-      short_description,
+      image = null,
       category,
-      image_url,
-      gallery,
-      video_url,
-      history,
-      significance,
-      is_featured,
-      is_active
+      gallery = []
     } = req.body;
 
     await pool.execute(
-      `UPDATE culture SET title = ?, slug = ?, description = ?, short_description = ?, category = ?, image_url = ?, gallery = ?, video_url = ?, history = ?, significance = ?, is_featured = ?, is_active = ?
+      `UPDATE cultures SET title = ?, description = ?, image = ?, category = ?, gallery = ?
        WHERE id = ?`,
-      [title, slug, description, short_description, category, image_url, JSON.stringify(gallery || []), video_url, history, significance, is_featured || false, is_active !== false, id]
+      [title, description, image, category, JSON.stringify(gallery), id]
     );
 
-    const [updatedCulture] = await pool.execute(
-      'SELECT * FROM culture WHERE id = ?',
-      [id]
-    );
+    const [rows] = await pool.execute('SELECT * FROM cultures WHERE id = ?', [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Budaya tidak ditemukan' });
+    }
 
     res.json({
       success: true,
       message: 'Budaya berhasil diupdate',
-      data: updatedCulture[0]
+      data: formatCulture(rows[0])
     });
   } catch (error) {
     console.error('Update culture error:', error);
@@ -177,7 +176,7 @@ const deleteCulture = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [result] = await pool.execute('DELETE FROM culture WHERE id = ?', [id]);
+    const [result] = await pool.execute('DELETE FROM cultures WHERE id = ?', [id]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({

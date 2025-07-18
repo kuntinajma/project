@@ -55,6 +55,7 @@ export interface MSMEProduct {
   material: string;
   durability: string;
   deliveryTime: string;
+  msme_id: string;
   sellerInfo: {
     brand: string;
     whatsapp: string;
@@ -99,4 +100,15 @@ export interface Amenity {
   icon: string;
   label: string;
   description: string;
+}
+
+export interface MSME {
+  id: string;
+  brand: string;
+  description: string;
+  phone:string;
+  whatsapp: string;
+  shopee: string;
+  instagram: string;
+  user_id: string;
 }
