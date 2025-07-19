@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Send, Upload, User, GraduationCap } from 'lucide-react';
+import { StarIcon as SolidStar } from '@heroicons/react/24/solid';
+import { StarIcon as OutlineStar } from '@heroicons/react/24/outline';
 
 interface ContactPageProps {
   onNavigate: (page: string) => void;
@@ -13,10 +15,17 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
     subject: '',
     message: '',
   });
+
+  // Location dropdown state
+  // Removed hierarchical location dropdowns as per user request
+
+  // The testimonialForm already has 'origin' field for location input
+  // No changes needed for country, province, city dropdowns
   const [contributeForm, setContributeForm] = useState({
+    name: '',
     title: '',
-    content: '',
     category: 'tips',
+    content: '',
     image: null as File | null,
   });
   const [testimonialForm, setTestimonialForm] = useState({
@@ -42,7 +51,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
     // Handle contribute form submission
     console.log('Contribute form submitted:', contributeForm);
     alert('Thank you for your contribution! We will review your article and get back to you.');
-    setContributeForm({ title: '', content: '', category: 'tips', image: null });
+    setContributeForm({ name: '', title: '', content: '', category: 'tips', image: null });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,14 +190,133 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h3>
               <form onSubmit={handleContactSubmit} className="space-y-6">
-                {/* existing contact form fields */}
-              </form>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={contactForm.name}
+                  onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              {/* Location Dropdowns */}
+              {/* Removed hierarchical location dropdowns as per user request */}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={contactForm.email}
+                  onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                <input
+                  type="text"
+                  value={contactForm.subject}
+                  onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <textarea
+                  value={contactForm.message}
+                  onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                  rows={5}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                <Send size={20} />
+                <span>Send Message</span>
+              </button>
+            </form>
             </div>
           ) : activeTab === 'contribute' ? (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Contribute Your Story</h3>
               <form onSubmit={handleContributeSubmit} className="space-y-6">
-                {/* existing contribute form fields */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <input
+                    type="text"
+                    value={contributeForm.name}
+                    onChange={(e) => setContributeForm({ ...contributeForm, name: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <input
+                    type="text"
+                    value={contributeForm.title}
+                    onChange={(e) => setContributeForm({ ...contributeForm, title: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <select
+                    value={contributeForm.category}
+                    onChange={(e) => setContributeForm({ ...contributeForm, category: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="tips">Tips</option>
+                    <option value="experience">Experience</option>
+                    <option value="culture">Culture</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                  <textarea
+                    value={contributeForm.content}
+                    onChange={(e) => setContributeForm({ ...contributeForm, content: e.target.value })}
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Upload Image (optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="w-full"
+                  />
+                  {contributeForm.image && <p className="text-sm text-gray-500 mt-2">{contributeForm.image.name}</p>}
+                </div>
+                <button
+                  type="submit"
+                  className="flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  <Upload size={20} />
+                  <span>Submit Article</span>
+                </button>
               </form>
             </div>
           ) : (
@@ -235,22 +363,26 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="star" className="block text-sm font-medium text-gray-700 mb-2">
-                    Star Rating
-                  </label>
-                  <select
-                    id="star"
-                    value={testimonialForm.star}
-                    onChange={(e) => setTestimonialForm({ ...testimonialForm, star: parseInt(e.target.value) })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    required
-                  >
+                  <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Star Rating</label>
+                  <div className="flex space-x-2 items-center overflow-visible">
                     {[1, 2, 3, 4, 5].map((num) => (
-                      <option key={num} value={num}>
-                        {num} Star{num > 1 ? 's' : ''}
-                      </option>
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setTestimonialForm({ ...testimonialForm, star: num })}
+                        className="focus:outline-none p-1 rounded"
+                        aria-label={`${num} Star${num > 1 ? 's' : ''}`}
+                      >
+                        {num <= testimonialForm.star ? (
+                          <SolidStar className="w-6 h-6 text-yellow-400" />
+                        ) : (
+                          <OutlineStar className="w-6 h-6 text-gray-300" />
+                        )}
+                      </button>
                     ))}
-                  </select>
+                  </div>
+                </div>
                 </div>
                 <div>
                   <label htmlFor="origin" className="block text-sm font-medium text-gray-700 mb-2">
