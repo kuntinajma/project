@@ -1,19 +1,22 @@
-const { pool } = require('../config/database');
+const { pool } = require("../config/database");
 
 // format raw db data to desired JSON output
 async function formatProduct(row) {
   // Get MSME info for sellerInfo
   const [msmeRows] = await pool.execute(
-    'SELECT brand, whatsapp, shopee, instagram FROM msmes WHERE id = ?',
+    "SELECT brand, whatsapp, shopee, instagram FROM msmes WHERE id = ?",
     [row.msme_id]
   );
 
-  const sellerInfo = msmeRows.length > 0 ? {
-    brand: msmeRows[0].brand,
-    whatsapp: msmeRows[0].whatsapp,
-    shopee: msmeRows[0].shopee,
-    instagram: msmeRows[0].instagram
-  } : null;
+  const sellerInfo =
+    msmeRows.length > 0
+      ? {
+          brand: msmeRows[0].brand,
+          whatsapp: msmeRows[0].whatsapp,
+          shopee: msmeRows[0].shopee,
+          instagram: msmeRows[0].instagram,
+        }
+      : null;
 
   return {
     id: String(row.id),
@@ -26,36 +29,46 @@ async function formatProduct(row) {
     deliveryTime: row.delivery_time,
     msme_id: String(row.msme_id),
     sellerInfo,
-    relatedProducts: row.related_products ? JSON.parse(row.related_products) : []
+    relatedProducts: row.related_products
+      ? JSON.parse(row.related_products)
+      : [],
   };
 }
 
 // Get all products
 const getAllProducts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, msme_id, min_price, max_price } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      msme_id,
+      min_price,
+      max_price,
+    } = req.query;
     const offset = (page - 1) * limit;
 
-    let whereClause = 'WHERE 1=1';
+    let whereClause = "WHERE 1=1";
     let params = [];
 
     if (msme_id) {
-      whereClause += ' AND msme_id = ?';
+      whereClause += " AND msme_id = ?";
       params.push(msme_id);
     }
 
     if (search) {
-      whereClause += ' AND (name LIKE ? OR description LIKE ? OR material LIKE ?)';
+      whereClause +=
+        " AND (name LIKE ? OR description LIKE ? OR material LIKE ?)";
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     if (min_price) {
-      whereClause += ' AND price >= ?';
+      whereClause += " AND price >= ?";
       params.push(min_price);
     }
 
     if (max_price) {
-      whereClause += ' AND price <= ?';
+      whereClause += " AND price <= ?";
       params.push(max_price);
     }
 
@@ -67,8 +80,10 @@ const getAllProducts = async (req, res) => {
 
     // Get products with pagination
     const [rows] = await pool.execute(
-      `SELECT * FROM products ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, parseInt(limit), offset]
+      `SELECT * FROM products ${whereClause} ORDER BY created_at DESC LIMIT ${parseInt(
+        limit
+      )} OFFSET ${offset}`,
+      params
     );
 
     // Format each row
@@ -85,15 +100,15 @@ const getAllProducts = async (req, res) => {
           currentPage: parseInt(page),
           totalPages,
           totalItems: total,
-          itemsPerPage: parseInt(limit)
-        }
-      }
+          itemsPerPage: parseInt(limit),
+        },
+      },
     });
   } catch (error) {
-    console.error('Get products error:', error);
+    console.error("Get products error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data produk'
+      message: "Server error saat mengambil data produk",
     });
   }
 };
@@ -104,14 +119,14 @@ const getProductById = async (req, res) => {
     const { id } = req.params;
 
     const [products] = await pool.execute(
-      'SELECT * FROM products WHERE id = ?',
+      "SELECT * FROM products WHERE id = ?",
       [id]
     );
 
     if (products.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Produk tidak ditemukan'
+        message: "Produk tidak ditemukan",
       });
     }
 
@@ -119,13 +134,13 @@ const getProductById = async (req, res) => {
 
     res.json({
       success: true,
-      data: product
+      data: product,
     });
   } catch (error) {
-    console.error('Get product error:', error);
+    console.error("Get product error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data produk'
+      message: "Server error saat mengambil data produk",
     });
   }
 };
@@ -142,7 +157,7 @@ const createProduct = async (req, res) => {
       durability,
       deliveryTime,
       msme_id,
-      relatedProducts = []
+      relatedProducts = [],
     } = req.body;
 
     // Get authenticated user_id
@@ -150,14 +165,14 @@ const createProduct = async (req, res) => {
 
     // Verify that the MSME belongs to the authenticated user
     const [msmeCheck] = await pool.execute(
-      'SELECT id FROM msmes WHERE id = ? AND user_id = ?',
+      "SELECT id FROM msmes WHERE id = ? AND user_id = ?",
       [msme_id, user_id]
     );
 
     if (msmeCheck.length === 0) {
       return res.status(403).json({
         success: false,
-        message: 'Anda tidak memiliki akses ke MSME ini'
+        message: "Anda tidak memiliki akses ke MSME ini",
       });
     }
 
@@ -182,12 +197,12 @@ const createProduct = async (req, res) => {
         durability,
         deliveryTime,
         msme_id,
-        relatedProducts.length > 0 ? JSON.stringify(relatedProducts) : null
+        relatedProducts.length > 0 ? JSON.stringify(relatedProducts) : null,
       ]
     );
 
     const [newProduct] = await pool.execute(
-      'SELECT * FROM products WHERE id = ?',
+      "SELECT * FROM products WHERE id = ?",
       [result.insertId]
     );
 
@@ -195,14 +210,14 @@ const createProduct = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Produk berhasil dibuat',
-      data: product
+      message: "Produk berhasil dibuat",
+      data: product,
     });
   } catch (error) {
-    console.error('Create product error:', error);
+    console.error("Create product error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat membuat produk'
+      message: "Server error saat membuat produk",
     });
   }
 };
@@ -222,7 +237,7 @@ const updateProduct = async (req, res) => {
       durability,
       deliveryTime,
       msme_id,
-      relatedProducts = []
+      relatedProducts = [],
     } = req.body;
 
     // Verify that the product belongs to a MSME owned by the authenticated user
@@ -236,20 +251,20 @@ const updateProduct = async (req, res) => {
     if (productCheck.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Produk tidak ditemukan atau Anda tidak memiliki akses'
+        message: "Produk tidak ditemukan atau Anda tidak memiliki akses",
       });
     }
 
     // Verify that the new MSME belongs to the authenticated user
     const [msmeCheck] = await pool.execute(
-      'SELECT id FROM msmes WHERE id = ? AND user_id = ?',
+      "SELECT id FROM msmes WHERE id = ? AND user_id = ?",
       [msme_id, user_id]
     );
 
     if (msmeCheck.length === 0) {
       return res.status(403).json({
         success: false,
-        message: 'Anda tidak memiliki akses ke MSME ini'
+        message: "Anda tidak memiliki akses ke MSME ini",
       });
     }
 
@@ -267,27 +282,26 @@ const updateProduct = async (req, res) => {
         deliveryTime,
         msme_id,
         relatedProducts.length > 0 ? JSON.stringify(relatedProducts) : null,
-        id
+        id,
       ]
     );
 
-    const [rows] = await pool.execute(
-      'SELECT * FROM products WHERE id = ?',
-      [id]
-    );
+    const [rows] = await pool.execute("SELECT * FROM products WHERE id = ?", [
+      id,
+    ]);
 
     const product = await formatProduct(rows[0]);
 
     res.json({
       success: true,
-      message: 'Produk berhasil diupdate',
-      data: product
+      message: "Produk berhasil diupdate",
+      data: product,
     });
   } catch (error) {
-    console.error('Update product error:', error);
+    console.error("Update product error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat update produk'
+      message: "Server error saat update produk",
     });
   }
 };
@@ -309,19 +323,19 @@ const deleteProduct = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Produk tidak ditemukan atau Anda tidak memiliki akses'
+        message: "Produk tidak ditemukan atau Anda tidak memiliki akses",
       });
     }
 
     res.json({
       success: true,
-      message: 'Produk berhasil dihapus'
+      message: "Produk berhasil dihapus",
     });
   } catch (error) {
-    console.error('Delete product error:', error);
+    console.error("Delete product error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat menghapus produk'
+      message: "Server error saat menghapus produk",
     });
   }
 };
@@ -331,5 +345,5 @@ module.exports = {
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
 };

@@ -1,4 +1,4 @@
-const { pool } = require('../config/database');
+const { pool } = require("../config/database");
 const DESTINATION_CATEGORIES = require("../constants/destinationCategories");
 
 const destinationCategories = Object.values(DESTINATION_CATEGORIES);
@@ -12,13 +12,13 @@ function formatDestination(row) {
     description: row.description,
     category: row.category,
     image: row.image ?? null,
-    location: row.latitude != null && row.longitude != null
-      ? { lat: Number(row.latitude), lng: Number(row.longitude) }
-      : null,
-    gallery: row.gallery ? JSON.parse(row.gallery) : null
+    location:
+      row.latitude != null && row.longitude != null
+        ? { lat: Number(row.latitude), lng: Number(row.longitude) }
+        : null,
+    gallery: row.gallery ? JSON.parse(row.gallery) : null,
   };
 }
-
 
 // Get all destinations
 const getAllDestinations = async (req, res) => {
@@ -26,16 +26,16 @@ const getAllDestinations = async (req, res) => {
     const { page = 1, limit = 10, category, search } = req.query;
     const offset = (page - 1) * limit;
 
-    let whereClause = 'WHERE 1=1';
+    let whereClause = "WHERE 1=1";
     let params = [];
 
     if (category && destinationCategories.includes(category)) {
-      whereClause += ' AND category = ?';
+      whereClause += " AND category = ?";
       params.push(category);
     }
 
     if (search) {
-      whereClause += ' AND (name LIKE ? OR description LIKE ?)';
+      whereClause += " AND (title LIKE ? OR description LIKE ?)";
       params.push(`%${search}%`, `%${search}%`);
     }
 
@@ -46,9 +46,12 @@ const getAllDestinations = async (req, res) => {
     );
 
     // Get destinations with pagination
+    //
     const [rows] = await pool.execute(
-      `SELECT * FROM destinations ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, parseInt(limit), offset]
+      `SELECT * FROM destinations ${whereClause} ORDER BY created_at DESC LIMIT ${parseInt(
+        limit
+      )} OFFSET ${offset}`,
+      params
     );
 
     // Format each row
@@ -65,15 +68,15 @@ const getAllDestinations = async (req, res) => {
           currentPage: parseInt(page),
           totalPages,
           totalItems: total,
-          itemsPerPage: parseInt(limit)
-        }
-      }
+          itemsPerPage: parseInt(limit),
+        },
+      },
     });
   } catch (error) {
-    console.error('Get destinations error:', error);
+    console.error("Get destinations error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data destinasi'
+      message: "Server error saat mengambil data destinasi",
     });
   }
 };
@@ -84,26 +87,26 @@ const getDestinationById = async (req, res) => {
     const { id } = req.params;
 
     const [destinations] = await pool.execute(
-      'SELECT * FROM destinations WHERE id = ?',
+      "SELECT * FROM destinations WHERE id = ?",
       [id]
     );
 
     if (destinations.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Destinasi tidak ditemukan'
+        message: "Destinasi tidak ditemukan",
       });
     }
 
     res.json({
       success: true,
-      data: formatDestination(destinations[0])
+      data: formatDestination(destinations[0]),
     });
   } catch (error) {
-    console.error('Get destination error:', error);
+    console.error("Get destination error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data destinasi'
+      message: "Server error saat mengambil data destinasi",
     });
   }
 };
@@ -118,7 +121,7 @@ const createDestination = async (req, res) => {
       category,
       image = null,
       location = null,
-      gallery = null
+      gallery = null,
     } = req.body;
 
     const latitude = location?.lat ?? null;
@@ -143,25 +146,25 @@ const createDestination = async (req, res) => {
         image,
         latitude,
         longitude,
-        gallery ? JSON.stringify(gallery) : null
+        gallery ? JSON.stringify(gallery) : null,
       ]
     );
 
     const [newDestination] = await pool.execute(
-      'SELECT * FROM destinations WHERE id = ?',
+      "SELECT * FROM destinations WHERE id = ?",
       [result.insertId]
     );
 
     res.status(201).json({
       success: true,
-      message: 'Destinasi berhasil dibuat',
-      data: formatDestination(newDestination[0])
+      message: "Destinasi berhasil dibuat",
+      data: formatDestination(newDestination[0]),
     });
   } catch (error) {
-    console.error('Create destination error:', error);
+    console.error("Create destination error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat membuat destinasi'
+      message: "Server error saat membuat destinasi",
     });
   }
 };
@@ -178,7 +181,7 @@ const updateDestination = async (req, res) => {
       category,
       image = null,
       location = null,
-      gallery = null
+      gallery = null,
     } = req.body;
 
     const latitude = location?.lat ?? null;
@@ -197,32 +200,32 @@ const updateDestination = async (req, res) => {
         latitude,
         longitude,
         gallery ? JSON.stringify(gallery) : null,
-        id
+        id,
       ]
     );
 
     const [rows] = await pool.execute(
-      'SELECT * FROM destinations WHERE id = ?',
+      "SELECT * FROM destinations WHERE id = ?",
       [id]
     );
 
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Destinasi tidak ditemukan'
+        message: "Destinasi tidak ditemukan",
       });
     }
 
     res.json({
       success: true,
-      message: 'Destinasi berhasil diupdate',
-      data: formatDestination(rows[0])
+      message: "Destinasi berhasil diupdate",
+      data: formatDestination(rows[0]),
     });
   } catch (error) {
-    console.error('Update destination error:', error);
+    console.error("Update destination error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat update destinasi'
+      message: "Server error saat update destinasi",
     });
   }
 };
@@ -232,24 +235,27 @@ const deleteDestination = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [result] = await pool.execute('DELETE FROM destinations WHERE id = ?', [id]);
+    const [result] = await pool.execute(
+      "DELETE FROM destinations WHERE id = ?",
+      [id]
+    );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Destinasi tidak ditemukan'
+        message: "Destinasi tidak ditemukan",
       });
     }
 
     res.json({
       success: true,
-      message: 'Destinasi berhasil dihapus'
+      message: "Destinasi berhasil dihapus",
     });
   } catch (error) {
-    console.error('Delete destination error:', error);
+    console.error("Delete destination error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat menghapus destinasi'
+      message: "Server error saat menghapus destinasi",
     });
   }
 };
@@ -259,5 +265,5 @@ module.exports = {
   getDestinationById,
   createDestination,
   updateDestination,
-  deleteDestination
+  deleteDestination,
 };
