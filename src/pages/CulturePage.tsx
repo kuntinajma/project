@@ -1,27 +1,39 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Play, Filter } from 'lucide-react';
-import { culturalContent } from '../data/mockData';
-import { CulturalContent } from '../types';
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, Play, Filter } from "lucide-react";
+// import { culturalContent } from '../data/mockData';
+import useCulturalContents from "../hooks/useCultures";
+import type { CultureQuery } from "../hooks/useCultures";
+import { CulturalContent } from "../types";
+import CulturalContentFilter from "../components/CulturalContent/CulturalContentFilter";
 
 interface CulturePageProps {
   onNavigate: (page: string) => void;
 }
 
 const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [selectedContent, setSelectedContent] = useState<CulturalContent | null>(null);
+  const [prevCultures, setPrevCultures] = useState<CulturalContent[]>([]);
+  const [query, setQuery] = useState<CultureQuery>({
+    page: 1,
+    limit: 10,
+    category: undefined,
+    search: "",
+  });
 
-  const filters = [
-    { id: 'all', label: 'All Culture', icon: '🎭' },
-    { id: 'dance', label: 'Dance', icon: '💃' },
-    { id: 'culinary', label: 'Culinary', icon: '🍽️' },
-    { id: 'customs', label: 'Customs', icon: '🏛️' },
-    { id: 'wisdom', label: 'Local Wisdom', icon: '📚' },
-  ];
+  const { cultures, loading, error } = useCulturalContents(query);
 
-  const filteredContent = culturalContent.filter(content => 
-    activeFilter === 'all' || content.category === activeFilter
-  );
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [selectedContent, setSelectedContent] =
+    useState<CulturalContent | null>(null);
+  const [search, setSearch] = useState("");
+
+  const handleFilterChange = (category: string) => {
+    setActiveFilter(category); // update UI active button
+    setQuery((prev) => ({
+      ...prev,
+      category: category === "all" ? undefined : category,
+      page: 1, // reset page when filter changes
+    }));
+  };
 
   const handleViewDetails = (content: CulturalContent) => {
     setSelectedContent(content);
@@ -30,6 +42,48 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
   const handleBackToList = () => {
     setSelectedContent(null);
   };
+
+  useEffect(() => {
+    if (cultures.length > 0) {
+      setPrevCultures(cultures);
+    }
+  }, [cultures]);
+
+  useEffect(() => {
+    if (search === query.search) return;
+
+    const handler = setTimeout(() => {
+      setQuery((prev) => ({
+        ...prev,
+        search: search,
+        page: 1,
+      }));
+    }, 400); // debounce delay (400ms)
+
+    return () => {
+      clearTimeout(handler); // cancel previous timeout on each keystroke
+    };
+  }, [query.search, search]);
+
+  // using previous destinations while loading data
+  const cultureList = loading ? prevCultures : cultures;
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Failed to load Cultural Contents
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Failed to load cultural content: {error.message}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (selectedContent) {
     return (
@@ -50,7 +104,7 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
                 alt={selectedContent.title}
                 className="w-full h-96 object-cover rounded-lg shadow-lg"
               />
-              
+
               {selectedContent.gallery.length > 1 && (
                 <div className="grid grid-cols-2 gap-4">
                   {selectedContent.gallery.slice(1).map((image, index) => (
@@ -66,10 +120,15 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
 
               {selectedContent.videos && selectedContent.videos.length > 0 && (
                 <div className="bg-white rounded-lg p-6 shadow-md">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Video Content</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Video Content
+                  </h3>
                   <div className="grid grid-cols-1 gap-4">
                     {selectedContent.videos.map((video, index) => (
-                      <div key={index} className="relative bg-gray-200 rounded-lg h-48 flex items-center justify-center">
+                      <div
+                        key={index}
+                        className="relative bg-gray-200 rounded-lg h-48 flex items-center justify-center"
+                      >
                         <Play className="text-gray-500" size={32} />
                         <p className="absolute bottom-2 left-2 text-sm text-gray-600">
                           Video {index + 1}
@@ -102,9 +161,10 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
                   Cultural Significance
                 </h3>
                 <p className="text-gray-600">
-                  This cultural element represents the rich heritage of Laiya Island and 
-                  Mattiro Labangeng Village, passed down through generations and still 
-                  practiced today as part of the community's identity.
+                  This cultural element represents the rich heritage of Laiya
+                  Island and Mattiro Labangeng Village, passed down through
+                  generations and still practiced today as part of the
+                  community's identity.
                 </p>
               </div>
 
@@ -113,10 +173,11 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
                   Experience This Culture
                 </h3>
                 <p className="text-orange-800 mb-4">
-                  Join our cultural tours to witness and participate in these traditional practices.
+                  Join our cultural tours to witness and participate in these
+                  traditional practices.
                 </p>
                 <button
-                  onClick={() => onNavigate('packages')}
+                  onClick={() => onNavigate("packages")}
                   className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors"
                 >
                   View Cultural Tours
@@ -132,43 +193,40 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-6">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Culture & Traditions
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Immerse yourself in the rich cultural heritage of Laiya Island and 
-            Mattiro Labangeng Village, where ancient traditions continue to thrive.
+            Immerse yourself in the rich cultural heritage of Laiya Island and
+            Mattiro Labangeng Village, where ancient traditions continue to
+            thrive.
           </p>
+
+          <div className="mt-6 flex flex-row items-center justify-center">
+            <div className="md:w-1/3">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search..."
+                className="w-full px-4 py-2 border shadow-md rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex items-center mb-4">
-            <Filter size={20} className="text-orange-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Filter by Category</h3>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            {filters.map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveFilter(filter.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors ${
-                  activeFilter === filter.id
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-orange-100'
-                }`}
-              >
-                <span>{filter.icon}</span>
-                <span className="font-medium">{filter.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        <CulturalContentFilter
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredContent.map((content) => (
-            <div key={content.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+          {cultureList.map((content) => (
+            <div
+              key={content.id}
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+            >
               <div className="relative">
                 <img
                   src={content.image}
@@ -181,15 +239,13 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {content.title}
                 </h3>
-                <p className="text-gray-600 mb-4">
-                  {content.description}
-                </p>
-                
+                <p className="text-gray-600 mb-4">{content.description}</p>
+
                 <button
                   onClick={() => handleViewDetails(content)}
                   className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors"
@@ -201,7 +257,7 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
           ))}
         </div>
 
-        {filteredContent.length === 0 && (
+        {cultureList.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">
               No cultural content found for the selected category.
