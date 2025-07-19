@@ -96,7 +96,7 @@ const TourPackagesPage: React.FC<TourPackagesPageProps> = ({ onNavigate }) => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search destinations..."
+                placeholder="Search packages..."
                 className="w-full px-4 py-2 border shadow-md rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400"
               />
             </div>
