@@ -93,12 +93,13 @@ const getProfile = async (req, res) => {
       });
     }
 
+    const user = users[0];
     // Remove password from response
     delete user.password;
 
     res.json({
       success: true,
-      data: users[0]
+      data: user
     });
   } catch (error) {
     console.error('Get profile error:', error);
