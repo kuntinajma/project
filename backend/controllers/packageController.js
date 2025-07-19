@@ -1,4 +1,4 @@
-const { pool } = require('../config/database');
+const { pool } = require("../config/database");
 
 function formatTourPackage(row) {
   return {
@@ -12,10 +12,9 @@ function formatTourPackage(row) {
     whatsappContact: row.whatsapp_contact,
     image: row.image ?? null,
     facilities: row.facilities ? JSON.parse(row.facilities) : [],
-    popular: !!row.popular
+    popular: !!row.popular,
   };
 }
-
 
 // Get all tour packages
 const getAllPackages = async (req, res) => {
@@ -23,11 +22,11 @@ const getAllPackages = async (req, res) => {
     const { page = 1, limit = 10, search } = req.query;
     const offset = (page - 1) * limit;
 
-    let whereClause = 'WHERE 1=1';
+    let whereClause = "WHERE 1=1";
     let params = [];
 
     if (search) {
-      whereClause += ' AND (name LIKE ? OR description LIKE ?)';
+      whereClause += " AND (name LIKE ? OR description LIKE ?)";
       params.push(`%${search}%`, `%${search}%`);
     }
 
@@ -39,8 +38,10 @@ const getAllPackages = async (req, res) => {
 
     // Get packages with pagination
     const [rows] = await pool.execute(
-      `SELECT * FROM tour_packages ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, parseInt(limit), offset]
+      `SELECT * FROM tour_packages ${whereClause} ORDER BY created_at DESC LIMIT ${parseInt(
+        limit
+      )} OFFSET ${offset}`,
+      params
     );
 
     const packages = rows.map(formatTourPackage);
@@ -56,15 +57,15 @@ const getAllPackages = async (req, res) => {
           currentPage: parseInt(page),
           totalPages,
           totalItems: total,
-          itemsPerPage: parseInt(limit)
-        }
-      }
+          itemsPerPage: parseInt(limit),
+        },
+      },
     });
   } catch (error) {
-    console.error('Get packages error:', error);
+    console.error("Get packages error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data paket wisata'
+      message: "Server error saat mengambil data paket wisata",
     });
   }
 };
@@ -75,26 +76,26 @@ const getPackageById = async (req, res) => {
     const { id } = req.params;
 
     const [packages] = await pool.execute(
-      'SELECT * FROM tour_packages WHERE id = ?',
+      "SELECT * FROM tour_packages WHERE id = ?",
       [id]
     );
 
     if (packages.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Paket wisata tidak ditemukan'
+        message: "Paket wisata tidak ditemukan",
       });
     }
 
     res.json({
       success: true,
-      data: formatTourPackage(packages[0])
+      data: formatTourPackage(packages[0]),
     });
   } catch (error) {
-    console.error('Get package error:', error);
+    console.error("Get package error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data paket wisata'
+      message: "Server error saat mengambil data paket wisata",
     });
   }
 };
@@ -112,7 +113,7 @@ const createPackage = async (req, res) => {
       whatsappContact,
       facilities,
       image = null,
-      popular = false
+      popular = false,
     } = req.body;
 
     const [result] = await pool.execute(
@@ -129,25 +130,25 @@ const createPackage = async (req, res) => {
         whatsappContact,
         JSON.stringify(facilities),
         image,
-        popular
+        popular,
       ]
     );
 
     const [rows] = await pool.execute(
-      'SELECT * FROM tour_packages WHERE id = ?',
+      "SELECT * FROM tour_packages WHERE id = ?",
       [result.insertId]
     );
 
     res.status(201).json({
       success: true,
-      message: 'Paket wisata berhasil dibuat',
-      data: formatTourPackage(rows[0])
+      message: "Paket wisata berhasil dibuat",
+      data: formatTourPackage(rows[0]),
     });
   } catch (error) {
-    console.error('Create package error:', error);
+    console.error("Create package error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat membuat paket wisata'
+      message: "Server error saat membuat paket wisata",
     });
   }
 };
@@ -166,7 +167,7 @@ const updatePackage = async (req, res) => {
       whatsappContact,
       facilities,
       image = null,
-      popular = false
+      popular = false,
     } = req.body;
 
     await pool.execute(
@@ -184,32 +185,32 @@ const updatePackage = async (req, res) => {
         JSON.stringify(facilities),
         image,
         popular,
-        id
+        id,
       ]
     );
 
     const [rows] = await pool.execute(
-      'SELECT * FROM tour_packages WHERE id = ?',
+      "SELECT * FROM tour_packages WHERE id = ?",
       [id]
     );
 
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Paket wisata tidak ditemukan'
+        message: "Paket wisata tidak ditemukan",
       });
     }
 
     res.json({
       success: true,
-      message: 'Paket wisata berhasil diupdate',
-      data: formatTourPackage(rows[0])
+      message: "Paket wisata berhasil diupdate",
+      data: formatTourPackage(rows[0]),
     });
   } catch (error) {
-    console.error('Update package error:', error);
+    console.error("Update package error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat update paket wisata'
+      message: "Server error saat update paket wisata",
     });
   }
 };
@@ -219,24 +220,27 @@ const deletePackage = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [result] = await pool.execute('DELETE FROM tour_packages WHERE id = ?', [id]);
+    const [result] = await pool.execute(
+      "DELETE FROM tour_packages WHERE id = ?",
+      [id]
+    );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Paket wisata tidak ditemukan'
+        message: "Paket wisata tidak ditemukan",
       });
     }
 
     res.json({
       success: true,
-      message: 'Paket wisata berhasil dihapus'
+      message: "Paket wisata berhasil dihapus",
     });
   } catch (error) {
-    console.error('Delete package error:', error);
+    console.error("Delete package error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat menghapus paket wisata'
+      message: "Server error saat menghapus paket wisata",
     });
   }
 };
@@ -246,5 +250,5 @@ module.exports = {
   getPackageById,
   createPackage,
   updatePackage,
-  deletePackage
+  deletePackage,
 };
