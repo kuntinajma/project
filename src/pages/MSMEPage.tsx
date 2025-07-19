@@ -1,14 +1,61 @@
-import React, { useState } from 'react';
-import { ArrowLeft, ShoppingBag, MessageCircle, ExternalLink, Star } from 'lucide-react';
-import { msmeProducts } from '../data/mockData';
-import { MSMEProduct } from '../types';
+import React, { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  ShoppingBag,
+  MessageCircle,
+  ExternalLink,
+  Star,
+} from "lucide-react";
+// import { msmeProducts } from '../data/mockData';
+import useMSMEProducts from "../hooks/useMSMEProducts";
+import type { MSMEProductQuery } from "../hooks/useMSMEProducts";
+import { MSMEProduct } from "../types";
 
 interface MSMEPageProps {
   onNavigate: (page: string) => void;
 }
 
 const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
-  const [selectedProduct, setSelectedProduct] = useState<MSMEProduct | null>(null);
+  const [prevMsmeProducts, setPrevMsmeProducts] = useState<MSMEProduct[]>([]);
+
+  const [query, setQuery] = useState<MSMEProductQuery>({
+    page: 1,
+    limit: 10,
+    search: "",
+  });
+
+  const { msmeProducts, loading, error } = useMSMEProducts(query);
+
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (msmeProducts.length > 0) {
+      setPrevMsmeProducts(msmeProducts);
+    }
+  }, [msmeProducts]);
+
+  useEffect(() => {
+    if (search === query.search) return;
+
+    const handler = setTimeout(() => {
+      setQuery((prev) => ({
+        ...prev,
+        search: search,
+        page: 1,
+      }));
+    }, 400); // debounce delay (400ms)
+
+    return () => {
+      clearTimeout(handler); // cancel previous timeout on each keystroke
+    };
+  }, [query.search, search]);
+
+  // using previous destinations while loading data
+  const productList = loading ? prevMsmeProducts : msmeProducts;
+
+  const [selectedProduct, setSelectedProduct] = useState<MSMEProduct | null>(
+    null
+  );
 
   const handleViewDetails = (product: MSMEProduct) => {
     setSelectedProduct(product);
@@ -19,35 +66,42 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(price);
   };
 
-  const handleContact = (platform: string, contact: string, productName: string) => {
-    let url = '';
+  const handleContact = (
+    platform: string,
+    contact: string,
+    productName: string
+  ) => {
+    let url = "";
     const message = `Hi! I'm interested in the ${productName} product. Can you provide more details?`;
-    
+
     switch (platform) {
-      case 'whatsapp':
-        url = `https://wa.me/${contact.replace('+', '')}?text=${encodeURIComponent(message)}`;
+      case "whatsapp":
+        url = `https://wa.me/${contact.replace(
+          "+",
+          ""
+        )}?text=${encodeURIComponent(message)}`;
         break;
-      case 'shopee':
+      case "shopee":
         url = contact;
         break;
-      case 'instagram':
-        url = `https://instagram.com/${contact.replace('@', '')}`;
+      case "instagram":
+        url = `https://instagram.com/${contact.replace("@", "")}`;
         break;
-      case 'tiktok':
+      case "tiktok":
         url = contact;
         break;
       default:
         return;
     }
-    
-    window.open(url, '_blank');
+
+    window.open(url, "_blank");
   };
 
   if (selectedProduct) {
@@ -69,21 +123,33 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
                 alt={selectedProduct.name}
                 className="w-full h-96 object-cover rounded-lg shadow-lg"
               />
-              
+
               <div className="bg-white rounded-lg p-6 shadow-md">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Details</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Product Details
+                </h3>
                 <div className="space-y-3">
                   <div>
                     <span className="font-medium text-gray-700">Material:</span>
-                    <span className="ml-2 text-gray-600">{selectedProduct.material}</span>
+                    <span className="ml-2 text-gray-600">
+                      {selectedProduct.material}
+                    </span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Durability:</span>
-                    <span className="ml-2 text-gray-600">{selectedProduct.durability}</span>
+                    <span className="font-medium text-gray-700">
+                      Durability:
+                    </span>
+                    <span className="ml-2 text-gray-600">
+                      {selectedProduct.durability}
+                    </span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Delivery Time:</span>
-                    <span className="ml-2 text-gray-600">{selectedProduct.deliveryTime}</span>
+                    <span className="font-medium text-gray-700">
+                      Delivery Time:
+                    </span>
+                    <span className="ml-2 text-gray-600">
+                      {selectedProduct.deliveryTime}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -128,39 +194,63 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
                     <p className="text-sm text-gray-600">Local Craftsman</p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    onClick={() => handleContact('whatsapp', selectedProduct.sellerInfo.whatsapp, selectedProduct.name)}
+                    onClick={() =>
+                      handleContact(
+                        "whatsapp",
+                        selectedProduct.sellerInfo.whatsapp,
+                        selectedProduct.name
+                      )
+                    }
                     className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <MessageCircle size={16} />
                     <span>WhatsApp</span>
                   </button>
-                  
+
                   {selectedProduct.sellerInfo.shopee && (
                     <button
-                      onClick={() => handleContact('shopee', selectedProduct.sellerInfo.shopee, selectedProduct.name)}
+                      onClick={() =>
+                        handleContact(
+                          "shopee",
+                          selectedProduct.sellerInfo.shopee,
+                          selectedProduct.name
+                        )
+                      }
                       className="flex items-center justify-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
                     >
                       <ShoppingBag size={16} />
                       <span>Shopee</span>
                     </button>
                   )}
-                  
+
                   {selectedProduct.sellerInfo.instagram && (
                     <button
-                      onClick={() => handleContact('instagram', selectedProduct.sellerInfo.instagram, selectedProduct.name)}
+                      onClick={() =>
+                        handleContact(
+                          "instagram",
+                          selectedProduct.sellerInfo.instagram,
+                          selectedProduct.name
+                        )
+                      }
                       className="flex items-center justify-center space-x-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors"
                     >
                       <ExternalLink size={16} />
                       <span>Instagram</span>
                     </button>
                   )}
-                  
+
                   {selectedProduct.sellerInfo.tiktok && (
                     <button
-                      onClick={() => handleContact('tiktok', selectedProduct.sellerInfo.tiktok, selectedProduct.name)}
+                      onClick={() =>
+                        handleContact(
+                          "tiktok",
+                          selectedProduct.sellerInfo.tiktok,
+                          selectedProduct.name
+                        )
+                      }
                       className="flex items-center justify-center space-x-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
                     >
                       <ExternalLink size={16} />
@@ -175,8 +265,8 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
                   Support Local Business
                 </h3>
                 <p className="text-blue-800">
-                  By purchasing this product, you're supporting local craftsmen and 
-                  the sustainable economy of Laiya Island community.
+                  By purchasing this product, you're supporting local craftsmen
+                  and the sustainable economy of Laiya Island community.
                 </p>
               </div>
             </div>
@@ -194,15 +284,30 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
             Local Products & MSMEs
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Discover authentic handcrafted products from local artisans and small 
-            businesses in Laiya Island. Support the community while taking home 
-            unique souvenirs.
+            Discover authentic handcrafted products from local artisans and
+            small businesses in Laiya Island. Support the community while taking
+            home unique souvenirs.
           </p>
+
+          <div className="mt-6 flex flex-row items-center justify-center">
+            <div className="md:w-1/3">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search product..."
+                className="w-full px-4 py-2 border shadow-md rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {msmeProducts.map((product) => (
-            <div key={product.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+          {productList.map((product) => (
+            <div
+              key={product.id}
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+            >
               <div className="relative">
                 <img
                   src={product.image}
@@ -216,7 +321,7 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {product.name}
@@ -227,7 +332,7 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
                 <p className="text-gray-600 mb-4 line-clamp-3">
                   {product.description}
                 </p>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500">
                     by {product.sellerInfo.brand}
@@ -250,17 +355,23 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Supporting Local Economy</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Supporting Local Economy
+              </h4>
               <p className="text-gray-600">
-                Our MSME partners are local artisans and small business owners who 
-                create authentic products using traditional techniques and local materials.
+                Our MSME partners are local artisans and small business owners
+                who create authentic products using traditional techniques and
+                local materials.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Quality & Authenticity</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Quality & Authenticity
+              </h4>
               <p className="text-gray-600">
-                Every product is carefully crafted with attention to detail, ensuring 
-                you receive genuine, high-quality items that represent the culture of Laiya Island.
+                Every product is carefully crafted with attention to detail,
+                ensuring you receive genuine, high-quality items that represent
+                the culture of Laiya Island.
               </p>
             </div>
           </div>
