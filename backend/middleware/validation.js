@@ -1,4 +1,8 @@
 const { body, param, query, validationResult } = require('express-validator');
+const USER_ROLE = require("../constants/roles");
+const DESTINATION_CATEGORIES = require("../constants/destinationCategories");
+const ARTICLE_CATEGORIES = require('../constants/articleCategories');
+const CULTURE_CATEGORIES = require('../constants/cultureCategories');
 
 // Handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -13,22 +17,26 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
+const roles = Object.values(USER_ROLE);
+const destinationCategories = Object.values(DESTINATION_CATEGORIES);
+const articleCategories = Object.values(ARTICLE_CATEGORIES);
+const cultureCategories = Object.values(CULTURE_CATEGORIES);
+
+
 // User validation rules
 const validateUser = [
   body('name').trim().isLength({ min: 2, max: 255 }).withMessage('Nama harus 2-255 karakter'),
   body('email').isEmail().normalizeEmail().withMessage('Email tidak valid'),
   body('password').isLength({ min: 6 }).withMessage('Password minimal 6 karakter'),
-  body('role').optional().isIn(['superadmin', 'admin', 'msme', 'contributor']).withMessage('Role tidak valid'),
-  body('phone').optional().isMobilePhone('id-ID').withMessage('Nomor telepon tidak valid'),
+  body('role').optional().isIn(roles).withMessage('Role tidak valid'),
+  body('is_active').optional().toBoolean(),
   handleValidationErrors
 ];
 
 const validateUserUpdate = [
   body('name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('Nama harus 2-255 karakter'),
-  body('email').optional().isEmail().normalizeEmail().withMessage('Email tidak valid'),
-  body('phone').optional().isMobilePhone('id-ID').withMessage('Nomor telepon tidak valid'),
-  body('university').optional().trim().isLength({ max: 255 }).withMessage('Universitas maksimal 255 karakter'),
-  body('major').optional().trim().isLength({ max: 255 }).withMessage('Jurusan maksimal 255 karakter'),
+  body('role').optional().isIn(roles).withMessage('Role tidak valid'),
+  body('is_active').optional().toBoolean(),
   handleValidationErrors
 ];
 
@@ -42,11 +50,41 @@ const validateLogin = [
 // Destination validation
 const validateDestination = [
   body('title').trim().isLength({ min: 3, max: 255 }).withMessage('Judul harus 3-255 karakter'),
-  body('short_description').trim().isLength({ min: 10, max: 500 }).withMessage('Deskripsi singkat harus 10-500 karakter'),
-  body('description').trim().isLength({ min: 50 }).withMessage('Deskripsi minimal 50 karakter'),
-  body('category').isIn(['beaches', 'culture', 'nature', 'adventure']).withMessage('Kategori tidak valid'),
-  body('latitude').optional().isFloat({ min: -90, max: 90 }).withMessage('Latitude tidak valid'),
-  body('longitude').optional().isFloat({ min: -180, max: 180 }).withMessage('Longitude tidak valid'),
+  body('shortDescription').trim().isLength({ min: 10, max: 500 }).withMessage('Deskripsi singkat harus 10-500 karakter'),
+  body('description').optional().trim().isLength({ min: 50 }).withMessage('Deskripsi minimal 50 karakter'),
+  body('category').isIn(destinationCategories).withMessage('Kategori tidak valid'),
+  body('image').optional().isURL().withMessage('URL gambar utama tidak valid'),
+  body('location')
+    .optional()
+    .custom(location => {
+      if (
+        location &&
+        (typeof location.lat !== 'number' || typeof location.lng !== 'number')
+      ) {
+        throw new Error('Lokasi harus berisi lat dan lng yang berupa angka');
+      }
+      if (
+        location &&
+        (location.lat < -90 || location.lat > 90 || location.lng < -180 || location.lng > 180)
+      ) {
+        throw new Error('Koordinat lokasi tidak valid');
+      }
+      return true;
+    }),
+  body('gallery')
+    .optional()
+    .custom(gallery => {
+      if (gallery === null) return true;
+      if (!Array.isArray(gallery)) {
+        throw new Error('Galeri harus berupa array');
+      }
+      for (const url of gallery) {
+        if (typeof url !== 'string' || !/^https?:\/\/.+/.test(url)) {
+          throw new Error('Semua item galeri harus berupa URL valid');
+        }
+      }
+      return true;
+    }),
   handleValidationErrors
 ];
 
@@ -56,23 +94,60 @@ const validateTourPackage = [
   body('description').trim().isLength({ min: 50 }).withMessage('Deskripsi minimal 50 karakter'),
   body('price').isFloat({ min: 0 }).withMessage('Harga harus angka positif'),
   body('duration').trim().notEmpty().withMessage('Durasi diperlukan'),
-  body('min_persons').isInt({ min: 1 }).withMessage('Minimal peserta harus angka positif'),
-  body('max_persons').optional().isInt({ min: 1 }).withMessage('Maksimal peserta harus angka positif'),
-  body('whatsapp_contact').isMobilePhone('id-ID').withMessage('Nomor WhatsApp tidak valid'),
+  body('minPersons').isInt({ min: 1 }).withMessage('Minimal peserta harus angka positif'),
+  body('maxPersons').optional().isInt({ min: 1 }).withMessage('Maksimal peserta harus angka positif'),
+  body('whatsappContact').isMobilePhone('id-ID').withMessage('Nomor WhatsApp tidak valid'),
   body('facilities').isArray({ min: 1 }).withMessage('Minimal 1 fasilitas diperlukan'),
+  body('image').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('popular').optional().isBoolean().withMessage('Popular harus boolean'),
   handleValidationErrors
 ];
 
+// culture
+const validateCulture = [
+  body('title').trim().isLength({ min: 3, max: 255 }).withMessage('Judul harus 3-255 karakter'),
+  body('description').trim().isLength({ min: 10 }).withMessage('Deskripsi minimal 10 karakter'),
+  body('category').isIn(cultureCategories).withMessage('Kategori tidak valid'),
+  body('image').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('gallery')
+    .optional()
+    .custom(gallery => {
+      if (gallery === null) return true;
+      if (!Array.isArray(gallery)) {
+        throw new Error('Galeri harus berupa array');
+      }
+      for (const url of gallery) {
+        if (typeof url !== 'string' || !/^https?:\/\/.+/.test(url)) {
+          throw new Error('Semua item galeri harus berupa URL valid');
+        }
+      }
+      return true;
+    }),
+  handleValidationErrors
+];
+
+//MSME
+const validateMSME = [
+  body("brand").trim().isLength({min: 3, max: 255}).withMessage("Nama brand harus 3-255 karakter"),
+  body('description').optional().trim().isLength({ max: 1000 }).withMessage('Deskripsi maksimal 1000 karakter'),
+  body('phone').optional().isMobilePhone('id-ID').withMessage('Nomor telepon tidak valid'),
+  body('instagram').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('shopee').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('whatsapp').optional().isMobilePhone('id-ID').withMessage('Nomor WhatsApp tidak valid'),
+]
+
 // Product validation
 const validateProduct = [
-  body('name').trim().isLength({ min: 3, max: 255 }).withMessage('Nama produk harus 3-255 karakter'),
-  body('description').trim().isLength({ min: 20 }).withMessage('Deskripsi minimal 20 karakter'),
-  body('price').isFloat({ min: 0 }).withMessage('Harga harus angka positif'),
-  body('stock_quantity').optional().isInt({ min: 0 }).withMessage('Stok harus angka non-negatif'),
-  body('min_order').optional().isInt({ min: 1 }).withMessage('Minimal order harus angka positif'),
-  body('material').optional().trim().isLength({ max: 255 }).withMessage('Material maksimal 255 karakter'),
-  body('delivery_time').optional().trim().isLength({ max: 100 }).withMessage('Waktu pengiriman maksimal 100 karakter'),
-  handleValidationErrors
+  body("name").trim().isLength({min: 3, max: 255}).withMessage("Nama produk harus 3-255 karakter"),
+  body('price').isFloat({min: 0}).withMessage('Harga harus berupa angka positif'),
+  body('image').optional().isURL().withMessage('URL gambar tidak valid'),
+  body('description').trim().isLength({min: 10, max: 1000}).withMessage('Deskripsi harus 10-1000 karakter'),
+  body('material').trim().isLength({min: 3, max: 255}).withMessage('Material harus 3-255 karakter'),
+  body('durability').trim().isLength({min: 3, max: 255}).withMessage('Durabilitas harus 3-255 karakter'),
+  body('deliveryTime').trim().isLength({min: 3, max: 255}).withMessage('Waktu pengiriman harus 3-255 karakter'),
+  body('msme_id').isInt({min: 1}).withMessage('MSME ID harus berupa angka positif'),
+  body('relatedProducts').optional().isArray().withMessage('Related products harus berupa array'),
+  body('relatedProducts.*').optional().isInt({min: 1}).withMessage('Related product ID harus berupa angka positif')
 ];
 
 // Article validation
@@ -80,18 +155,7 @@ const validateArticle = [
   body('title').trim().isLength({ min: 5, max: 255 }).withMessage('Judul harus 5-255 karakter'),
   body('excerpt').trim().isLength({ min: 20, max: 500 }).withMessage('Excerpt harus 20-500 karakter'),
   body('content').trim().isLength({ min: 100 }).withMessage('Konten minimal 100 karakter'),
-  body('category').isIn(['tips', 'tourism', 'culture', 'msmes', 'environment']).withMessage('Kategori tidak valid'),
-  handleValidationErrors
-];
-
-// MSME validation
-const validateMSME = [
-  body('business_name').trim().isLength({ min: 3, max: 255 }).withMessage('Nama bisnis harus 3-255 karakter'),
-  body('business_type').optional().trim().isLength({ max: 100 }).withMessage('Tipe bisnis maksimal 100 karakter'),
-  body('description').optional().trim().isLength({ max: 1000 }).withMessage('Deskripsi maksimal 1000 karakter'),
-  body('phone').optional().isMobilePhone('id-ID').withMessage('Nomor telepon tidak valid'),
-  body('whatsapp').optional().isMobilePhone('id-ID').withMessage('Nomor WhatsApp tidak valid'),
-  body('email').optional().isEmail().withMessage('Email tidak valid'),
+  body('category').isIn(articleCategories).withMessage('Kategori tidak valid'),
   handleValidationErrors
 ];
 
@@ -114,6 +178,7 @@ module.exports = {
   validateLogin,
   validateDestination,
   validateTourPackage,
+  validateCulture,
   validateProduct,
   validateArticle,
   validateMSME,

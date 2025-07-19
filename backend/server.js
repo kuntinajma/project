@@ -51,6 +51,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/destinations', require('./routes/destinations'));
 app.use('/api/packages', require('./routes/packages'));
 app.use('/api/umkm', require('./routes/umkm'));
+app.use('/api/msme', require('./routes/msme'));
+app.use('/api/products', require('./routes/products'));
 app.use('/api/culture', require('./routes/culture'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/contact', require('./routes/contact'));

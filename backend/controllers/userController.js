@@ -28,8 +28,7 @@ const getAllUsers = async (req, res) => {
 
     // Get users with pagination
     const [users] = await pool.execute(
-      `SELECT id, name, email, role, phone, avatar, university, major, 
-              is_active, is_verified, created_at, last_login
+      `SELECT id, name, email, role, is_active, created_at, updated_at
        FROM users ${whereClause}
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,

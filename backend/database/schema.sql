@@ -1,0 +1,92 @@
+-- USERS TABLE
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(255) NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- DESTINATIONS
+DROP TABLE IF EXISTS destinations;
+
+CREATE TABLE destinations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  short_description VARCHAR(255) NOT NULL,
+  description TEXT NULL,
+  category VARCHAR(255) NOT NULL,
+  image VARCHAR(255) NULL,
+  latitude  DECIMAL(10, 8) NULL,
+  longitude DECIMAL(11, 8) NULL,
+  gallery TEXT NULL -- JSON array
+);
+
+-- TOUR PACKAGES
+DROP TABLE IF EXISTS tour_packages;
+
+CREATE TABLE tour_packages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT NULL,
+  price FLOAT NULL,
+  duration VARCHAR(255)  NULL,
+  min_persons INT,
+  max_persons INT,
+  whatsapp_contact VARCHAR(20) NULL,
+  facilities TEXT NULL, -- JSON array
+  image VARCHAR(255) NULL,
+  popular BOOLEAN DEFAULT FALSE
+);
+
+-- CULTURES
+DROP TABLE IF EXISTS cultures;
+
+CREATE TABLE cultures (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(100) NOT NULL,
+  description TEXT NULL,
+  image VARCHAR(255) NULL,
+  category VARCHAR(255),
+  gallery TEXT NULL -- JSON array
+);
+
+
+-- MSMES
+DROP TABLE IF EXISTS msmes;
+
+CREATE TABLE msmes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  brand VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  phone VARCHAR(20) NULL,
+  instagram VARCHAR(255) NULL,
+  shopee VARCHAR(255) NULL,
+  whatsapp VARCHAR(20) NULL,
+  user_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- PRODUCTS
+DROP TABLE IF EXISTS products;
+
+CREATE TABLE products (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(15, 2) NOT NULL,
+  image VARCHAR(255) NULL,
+  description TEXT NOT NULL,
+  material VARCHAR(255) NOT NULL,
+  durability VARCHAR(255) NOT NULL,
+  delivery_time VARCHAR(255) NOT NULL,
+  msme_id INT NOT NULL,
+  related_products TEXT NULL, -- JSON array of product IDs
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
