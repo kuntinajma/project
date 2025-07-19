@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 
 // Layout
 import PublicLayout from './components/public/PublicLayout';
@@ -62,8 +63,10 @@ function App({ onNavigate }: { onNavigate: (page: string) => void }) {
 
 export default function RootApp() {
   return (
-    <Router>
-      <AppWrapper />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppWrapper />
+      </Router>
+    </AuthProvider>
   );
 }
