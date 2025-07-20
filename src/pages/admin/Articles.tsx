@@ -383,11 +383,19 @@ const Articles: React.FC = () => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Featured Image URL</label>
-                      <input
-                        type="url"
-                        placeholder="https://example.com/image.jpg"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
+                      <div className="flex items-center space-x-4">
+                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <PhotoIcon className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">JPG, PNG, or GIF. Max size 5MB.</p>
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="flex justify-end space-x-3 pt-4">

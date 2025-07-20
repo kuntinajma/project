@@ -267,19 +267,47 @@ const Culture: React.FC = () => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                      <input
-                        type="url"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
+                      <div className="flex items-center space-x-4">
+                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <PhotoIcon className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">JPG, PNG, or GIF. Max size 5MB.</p>
+                        </div>
+                      </div>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Video URL (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Video File (Optional)</label>
                       <input
-                        type="url"
-                        placeholder="YouTube or other video URL"
+                        type="file"
+                        accept="video/*"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
+                      <p className="text-xs text-gray-500 mt-1">MP4, MOV, or AVI. Max size 50MB.</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Gallery Images</label>
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+                            <PhotoIcon className="h-8 w-8 text-gray-400" />
+                          </div>
+                        ))}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Select multiple images for gallery</p>
                     </div>
                     
                     <div className="flex justify-end space-x-3 pt-4">
