@@ -282,23 +282,14 @@ const Destinations: React.FC = () => {
                       />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                        <input
-                          type="text"
-                          placeholder="-5.1234"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                        <input
-                          type="text"
-                          placeholder="119.5678"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://maps.google.com/maps?q=Laiya+Island"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">URL Google Maps untuk lokasi destinasi</p>
                     </div>
                     
                     <div>
