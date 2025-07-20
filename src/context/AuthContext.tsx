@@ -1,18 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
-interface Admin {
+interface User {
   id: number;
-  username: string;
   email: string;
-  full_name: string;
+  name: string;
   role: string;
 }
 
 interface AuthContextType {
-  admin: Admin | null;
+  user: User | null;
   token: string | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, role?: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -35,7 +34,7 @@ interface AuthProviderProps {
 const API_BASE_URL = 'http://localhost:5000/api';
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [admin, setAdmin] = useState<Admin | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const response = await axios.get(`${API_BASE_URL}/auth/profile`);
           if (response.data.success) {
-            setAdmin(response.data.data);
+            setUser(response.data.data);
           } else {
             logout();
           }
@@ -69,16 +68,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, [token]);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, role?: string): Promise<boolean> => {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        email :username,
+        email: email,
         password: password
       });
 
       if (response.data.success) {
-        const { admin: adminData, token: tokenData } = response.data.data;
-        setAdmin(adminData);
+        const { user: userData, token: tokenData } = response.data.data;
+        setUser(userData);
         setToken(tokenData);
         localStorage.setItem('token', tokenData);
         return true;
@@ -91,7 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    setAdmin(null);
+    setUser(null);
     setToken(null);
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
@@ -99,11 +98,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{
-      admin,
+      user,
       token,
       login,
       logout,
-      isAuthenticated: !!admin,
+      isAuthenticated: !!user,
       loading
     }}>
       {children}
