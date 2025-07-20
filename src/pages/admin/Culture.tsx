@@ -283,13 +283,13 @@ const Culture: React.FC = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Video File (Optional)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">YouTube Video URL (Optional)</label>
                       <input
-                        type="file"
-                        accept="video/*"
+                        type="url"
+                        placeholder="https://www.youtube.com/watch?v=..."
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
-                      <p className="text-xs text-gray-500 mt-1">MP4, MOV, or AVI. Max size 50MB.</p>
+                      <p className="text-xs text-gray-500 mt-1">YouTube video URL untuk konten budaya</p>
                     </div>
                     
                     <div>
