@@ -9,12 +9,18 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Toast from '../../components/common/Toast';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { useToast } from '../../hooks/useToast';
 
 const Users: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
+  const { toast, showToast, hideToast } = useToast();
 
   const users = [
     { id: 1, name: 'John Admin', email: 'john@admin.com', role: 'admin', status: 'active', lastLogin: '2024-01-15' },
@@ -41,6 +47,34 @@ const Users: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleDeleteUser = (user: any) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteUser = () => {
+    // Simulate API call
+    setTimeout(() => {
+      showToast('success', `User ${userToDelete.name} berhasil dihapus`);
+      setUserToDelete(null);
+    }, 500);
+  };
+
+  const handleSubmitUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate API call
+    setTimeout(() => {
+      const action = selectedUser ? 'diperbarui' : 'dibuat';
+      showToast('success', `User berhasil ${action}`);
+      setIsModalOpen(false);
+      setSelectedUser(null);
+    }, 500);
+  };
+
+  const handleToggleStatus = (user: any) => {
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    showToast('success', `Status user ${user.name} berhasil diubah menjadi ${newStatus}`);
+  };
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';
@@ -157,8 +191,17 @@ const Users: React.FC = () => {
                       >
                         <PencilIcon className="h-4 w-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button 
+                        onClick={() => handleDeleteUser(user)}
+                        className="text-red-600 hover:text-red-900"
+                      >
                         <TrashIcon className="h-4 w-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleToggleStatus(user)}
+                        className="text-blue-600 hover:text-blue-900 text-xs"
+                      >
+                        Toggle
                       </button>
                     </div>
                   </td>
@@ -200,7 +243,7 @@ const Users: React.FC = () => {
                     {selectedUser ? 'Edit User' : 'Add New User'}
                   </Dialog.Title>
                   
-                  <form className="space-y-4">
+                  <form onSubmit={handleSubmitUser} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                       <input
@@ -263,6 +306,27 @@ const Users: React.FC = () => {
           </div>
         </Dialog>
       </Transition>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteUser}
+        title="Hapus User"
+        message={`Apakah Anda yakin ingin menghapus user ${userToDelete?.name}? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        type="danger"
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };

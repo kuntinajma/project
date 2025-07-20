@@ -12,11 +12,17 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Toast from '../../components/common/Toast';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { useToast } from '../../hooks/useToast';
 
 const TourPackages: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [packageToDelete, setPackageToDelete] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { toast, showToast, hideToast } = useToast();
 
   const packages = [
     { 
@@ -71,6 +77,32 @@ const TourPackages: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleDeletePackage = (pkg: any) => {
+    setPackageToDelete(pkg);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeletePackage = () => {
+    setTimeout(() => {
+      showToast('success', `Paket wisata ${packageToDelete.name} berhasil dihapus`);
+      setPackageToDelete(null);
+    }, 500);
+  };
+
+  const handleSubmitPackage = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTimeout(() => {
+      const action = selectedPackage ? 'diperbarui' : 'dibuat';
+      showToast('success', `Paket wisata berhasil ${action}`);
+      setIsModalOpen(false);
+      setSelectedPackage(null);
+    }, 500);
+  };
+
+  const handleToggleStatus = (pkg: any) => {
+    const newStatus = pkg.status === 'active' ? 'inactive' : 'active';
+    showToast('success', `Status paket ${pkg.name} berhasil diubah menjadi ${newStatus}`);
+  };
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -168,7 +200,10 @@ const TourPackages: React.FC = () => {
                   <PencilIcon className="h-4 w-4 inline mr-1" />
                   Edit
                 </button>
-                <button className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium">
+                <button 
+                  onClick={() => handleDeletePackage(pkg)}
+                  className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium"
+                >
                   <TrashIcon className="h-4 w-4 inline mr-1" />
                   Delete
                 </button>
@@ -209,7 +244,7 @@ const TourPackages: React.FC = () => {
                     {selectedPackage ? 'Edit Tour Package' : 'Add New Tour Package'}
                   </Dialog.Title>
                   
-                  <form className="space-y-4">
+                  <form onSubmit={handleSubmitPackage} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
                       <input
@@ -327,6 +362,27 @@ const TourPackages: React.FC = () => {
           </div>
         </Dialog>
       </Transition>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeletePackage}
+        title="Hapus Paket Wisata"
+        message={`Apakah Anda yakin ingin menghapus paket wisata ${packageToDelete?.name}? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        type="danger"
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };

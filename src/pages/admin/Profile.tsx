@@ -6,8 +6,11 @@ import {
   PhoneIcon,
   PhotoIcon
 } from '@heroicons/react/24/outline';
+import Toast from '../../components/common/Toast';
+import { useToast } from '../../hooks/useToast';
 
 const Profile: React.FC = () => {
+  const { toast, showToast, hideToast } = useToast();
   const [profileData, setProfileData] = useState({
     name: 'Sarah Johnson',
     email: 'sarah@example.com',
@@ -37,9 +40,10 @@ const Profile: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Profile updated:', profileData);
-    alert('Profile updated successfully!');
+    // Simulate API call
+    setTimeout(() => {
+      showToast('success', 'Profil kontributor berhasil diperbarui');
+    }, 500);
   };
 
   return (
@@ -258,6 +262,15 @@ const Profile: React.FC = () => {
           </form>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };

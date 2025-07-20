@@ -9,12 +9,18 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Toast from '../../components/common/Toast';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { useToast } from '../../hooks/useToast';
 
 const Culture: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCulture, setSelectedCulture] = useState<any>(null);
+  const [cultureToDelete, setCultureToDelete] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const { toast, showToast, hideToast } = useToast();
 
   const cultures = [
     { 
@@ -59,6 +65,27 @@ const Culture: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleDeleteCulture = (culture: any) => {
+    setCultureToDelete(culture);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteCulture = () => {
+    setTimeout(() => {
+      showToast('success', `Budaya ${cultureToDelete.title} berhasil dihapus`);
+      setCultureToDelete(null);
+    }, 500);
+  };
+
+  const handleSubmitCulture = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTimeout(() => {
+      const action = selectedCulture ? 'diperbarui' : 'dibuat';
+      showToast('success', `Budaya berhasil ${action}`);
+      setIsModalOpen(false);
+      setSelectedCulture(null);
+    }, 500);
+  };
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'dance': return 'bg-pink-100 text-pink-800';
@@ -162,7 +189,10 @@ const Culture: React.FC = () => {
                   <PencilIcon className="h-4 w-4 inline mr-1" />
                   Edit
                 </button>
-                <button className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium">
+                <button 
+                  onClick={() => handleDeleteCulture(culture)}
+                  className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium"
+                >
                   <TrashIcon className="h-4 w-4 inline mr-1" />
                   Delete
                 </button>
@@ -203,7 +233,7 @@ const Culture: React.FC = () => {
                     {selectedCulture ? 'Edit Culture' : 'Add New Culture'}
                   </Dialog.Title>
                   
-                  <form className="space-y-4">
+                  <form onSubmit={handleSubmitCulture} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                       <input
@@ -274,6 +304,27 @@ const Culture: React.FC = () => {
           </div>
         </Dialog>
       </Transition>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteCulture}
+        title="Hapus Budaya"
+        message={`Apakah Anda yakin ingin menghapus budaya ${cultureToDelete?.title}? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        type="danger"
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };

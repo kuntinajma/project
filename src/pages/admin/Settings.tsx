@@ -7,9 +7,23 @@ import {
   GlobeAltIcon,
   PhotoIcon
 } from '@heroicons/react/24/outline';
+import Toast from '../../components/common/Toast';
+import { useToast } from '../../hooks/useToast';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const { toast, showToast, hideToast } = useToast();
+
+  const handleSaveSettings = () => {
+    // Simulate API call
+    setTimeout(() => {
+      showToast('success', 'Pengaturan berhasil disimpan');
+    }, 500);
+  };
+
+  const handleResetSettings = () => {
+    showToast('info', 'Pengaturan direset ke nilai default');
+  };
 
   const tabs = [
     { id: 'general', label: 'General', icon: CogIcon },
@@ -267,15 +281,30 @@ const Settings: React.FC = () => {
           {activeTab === 'social' && renderSocialSettings()}
           
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
-            <button className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+            <button 
+              onClick={handleResetSettings}
+              className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
               Reset
             </button>
-            <button className="px-6 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700">
+            <button 
+              onClick={handleSaveSettings}
+              className="px-6 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
+            >
               Save Changes
             </button>
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
 
       {/* Island Facilities */}
       <div className="bg-white rounded-lg shadow-md p-6">

@@ -13,14 +13,20 @@ import {
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import Toast from '../../components/common/Toast';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { useToast } from '../../hooks/useToast';
 
 const Articles: React.FC = () => {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
+  const [articleToDelete, setArticleToDelete] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const { toast, showToast, hideToast } = useToast();
 
   const articles = [
     { 
@@ -96,6 +102,35 @@ const Articles: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleDeleteArticle = (article: any) => {
+    setArticleToDelete(article);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteArticle = () => {
+    setTimeout(() => {
+      showToast('success', `Artikel ${articleToDelete.title} berhasil dihapus`);
+      setArticleToDelete(null);
+    }, 500);
+  };
+
+  const handleSubmitArticle = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTimeout(() => {
+      const action = selectedArticle ? 'diperbarui' : 'dibuat';
+      showToast('success', `Artikel berhasil ${action}`);
+      setIsModalOpen(false);
+      setSelectedArticle(null);
+    }, 500);
+  };
+
+  const handleApproveArticle = (article: any) => {
+    showToast('success', `Artikel ${article.title} berhasil disetujui`);
+  };
+
+  const handleRejectArticle = (article: any) => {
+    showToast('error', `Artikel ${article.title} ditolak`);
+  };
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'published': return 'bg-green-100 text-green-800';
@@ -217,10 +252,16 @@ const Articles: React.FC = () => {
               <div className="flex items-center space-x-2 ml-4">
                 {canApproveReject && article.status === 'pending' && (
                   <>
-                    <button className="text-green-600 hover:text-green-700 p-2">
+                    <button 
+                      onClick={() => handleApproveArticle(article)}
+                      className="text-green-600 hover:text-green-700 p-2"
+                    >
                       <CheckCircleIcon className="h-5 w-5" />
                     </button>
-                    <button className="text-red-600 hover:text-red-700 p-2">
+                    <button 
+                      onClick={() => handleRejectArticle(article)}
+                      className="text-red-600 hover:text-red-700 p-2"
+                    >
                       <XCircleIcon className="h-5 w-5" />
                     </button>
                   </>
@@ -236,7 +277,10 @@ const Articles: React.FC = () => {
                 </button>
                 {(user?.role === 'contributor' && article.author === user.name) || 
                  (user?.role === 'admin' || user?.role === 'superadmin') ? (
-                  <button className="text-red-600 hover:text-red-700 p-2">
+                  <button 
+                    onClick={() => handleDeleteArticle(article)}
+                    className="text-red-600 hover:text-red-700 p-2"
+                  >
                     <TrashIcon className="h-5 w-5" />
                   </button>
                 ) : null}
@@ -277,7 +321,7 @@ const Articles: React.FC = () => {
                     {selectedArticle ? 'Edit Article' : 'Write New Article'}
                   </Dialog.Title>
                   
-                  <form className="space-y-4">
+                  <form onSubmit={handleSubmitArticle} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                       <input
@@ -374,6 +418,27 @@ const Articles: React.FC = () => {
           </div>
         </Dialog>
       </Transition>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteArticle}
+        title="Hapus Artikel"
+        message={`Apakah Anda yakin ingin menghapus artikel ${articleToDelete?.title}? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        type="danger"
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };

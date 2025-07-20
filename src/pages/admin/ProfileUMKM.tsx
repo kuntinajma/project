@@ -6,8 +6,11 @@ import {
   PhotoIcon,
   GlobeAltIcon
 } from '@heroicons/react/24/outline';
+import Toast from '../../components/common/Toast';
+import { useToast } from '../../hooks/useToast';
 
 const ProfileUMKM: React.FC = () => {
+  const { toast, showToast, hideToast } = useToast();
   const [profileData, setProfileData] = useState({
     businessName: 'Kerajinan Laiya',
     ownerName: 'Ahmad Rahman',
@@ -32,9 +35,10 @@ const ProfileUMKM: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Profile updated:', profileData);
-    alert('Profile updated successfully!');
+    // Simulate API call
+    setTimeout(() => {
+      showToast('success', 'Profil UMKM berhasil diperbarui');
+    }, 500);
   };
 
   return (
@@ -279,6 +283,15 @@ const ProfileUMKM: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };

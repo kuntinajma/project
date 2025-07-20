@@ -9,11 +9,17 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Toast from '../../components/common/Toast';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { useToast } from '../../hooks/useToast';
 
 const Products: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [productToDelete, setProductToDelete] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { toast, showToast, hideToast } = useToast();
 
   const products = [
     { 
@@ -65,6 +71,31 @@ const Products: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleDeleteProduct = (product: any) => {
+    setProductToDelete(product);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteProduct = () => {
+    setTimeout(() => {
+      showToast('success', `Produk ${productToDelete.name} berhasil dihapus`);
+      setProductToDelete(null);
+    }, 500);
+  };
+
+  const handleSubmitProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTimeout(() => {
+      const action = selectedProduct ? 'diperbarui' : 'dibuat';
+      showToast('success', `Produk berhasil ${action}`);
+      setIsModalOpen(false);
+      setSelectedProduct(null);
+    }, 500);
+  };
+
+  const handleUpdateStock = (product: any, newStock: number) => {
+    showToast('success', `Stok produk ${product.name} berhasil diperbarui menjadi ${newStock}`);
+  };
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -151,7 +182,10 @@ const Products: React.FC = () => {
                   <PencilIcon className="h-4 w-4 inline mr-1" />
                   Edit
                 </button>
-                <button className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium">
+                <button 
+                  onClick={() => handleDeleteProduct(product)}
+                  className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium"
+                >
                   <TrashIcon className="h-4 w-4 inline mr-1" />
                   Delete
                 </button>
@@ -192,7 +226,7 @@ const Products: React.FC = () => {
                     {selectedProduct ? 'Edit Product' : 'Add New Product'}
                   </Dialog.Title>
                   
-                  <form className="space-y-4">
+                  <form onSubmit={handleSubmitProduct} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                       <input
@@ -290,6 +324,27 @@ const Products: React.FC = () => {
           </div>
         </Dialog>
       </Transition>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteProduct}
+        title="Hapus Produk"
+        message={`Apakah Anda yakin ingin menghapus produk ${productToDelete?.name}? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        type="danger"
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };

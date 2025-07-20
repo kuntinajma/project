@@ -9,12 +9,18 @@ import {
 } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import Toast from '../../components/common/Toast';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { useToast } from '../../hooks/useToast';
 
 const Destinations: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<any>(null);
+  const [destinationToDelete, setDestinationToDelete] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const { toast, showToast, hideToast } = useToast();
 
   const destinations = [
     { 
@@ -62,6 +68,32 @@ const Destinations: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleDeleteDestination = (destination: any) => {
+    setDestinationToDelete(destination);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteDestination = () => {
+    setTimeout(() => {
+      showToast('success', `Destinasi ${destinationToDelete.title} berhasil dihapus`);
+      setDestinationToDelete(null);
+    }, 500);
+  };
+
+  const handleSubmitDestination = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTimeout(() => {
+      const action = selectedDestination ? 'diperbarui' : 'dibuat';
+      showToast('success', `Destinasi berhasil ${action}`);
+      setIsModalOpen(false);
+      setSelectedDestination(null);
+    }, 500);
+  };
+
+  const handleToggleStatus = (destination: any) => {
+    const newStatus = destination.status === 'published' ? 'draft' : 'published';
+    showToast('success', `Status destinasi ${destination.title} berhasil diubah menjadi ${newStatus}`);
+  };
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'beaches': return 'bg-blue-100 text-blue-800';
@@ -166,7 +198,10 @@ const Destinations: React.FC = () => {
                   <PencilIcon className="h-4 w-4 inline mr-1" />
                   Edit
                 </button>
-                <button className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium">
+                <button 
+                  onClick={() => handleDeleteDestination(destination)}
+                  className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium"
+                >
                   <TrashIcon className="h-4 w-4 inline mr-1" />
                   Delete
                 </button>
@@ -207,7 +242,7 @@ const Destinations: React.FC = () => {
                     {selectedDestination ? 'Edit Destination' : 'Add New Destination'}
                   </Dialog.Title>
                   
-                  <form className="space-y-4">
+                  <form onSubmit={handleSubmitDestination} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                       <input
@@ -296,6 +331,27 @@ const Destinations: React.FC = () => {
           </div>
         </Dialog>
       </Transition>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteDestination}
+        title="Hapus Destinasi"
+        message={`Apakah Anda yakin ingin menghapus destinasi ${destinationToDelete?.title}? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        type="danger"
+      />
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };
