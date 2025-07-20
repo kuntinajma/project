@@ -87,10 +87,10 @@ const AdminDashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">{destination.views} views</span>
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
                     <EyeIcon className="h-4 w-4" />
                   </button>
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
                     <PencilIcon className="h-4 w-4" />
                   </button>
                 </div>

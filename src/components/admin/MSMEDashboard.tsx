@@ -101,13 +101,13 @@ const MSMEDashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex space-x-1">
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
                     <EyeIcon className="h-4 w-4" />
                   </button>
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
                     <PencilIcon className="h-4 w-4" />
                   </button>
-                  <button className="text-gray-400 hover:text-red-600">
+                  <button className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>

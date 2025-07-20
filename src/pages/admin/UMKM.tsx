@@ -179,23 +179,25 @@ const UMKM: React.FC = () => {
             </div>
             
             <div className="flex space-x-2">
-              <button className="flex-1 text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center justify-center space-x-1">
+              <button className="flex items-center justify-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors">
                 <EyeIcon className="h-4 w-4" />
-                <span>View Details</span>
+                <span className="text-sm font-medium ml-1">View</span>
               </button>
               {umkm.status === 'pending' && (
                 <>
                   <button 
                     onClick={() => handleApproveUMKM(umkm)}
-                    className="flex-1 text-green-600 hover:text-green-700 text-sm font-medium"
+                    className="flex items-center justify-center px-3 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
                   >
-                    Approve
+                    <CheckCircleIcon className="h-4 w-4 mr-1" />
+                    <span className="text-sm font-medium">Approve</span>
                   </button>
                   <button 
                     onClick={() => handleRejectUMKM(umkm)}
-                    className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium"
+                    className="flex items-center justify-center px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
                   >
-                    Reject
+                    <XCircleIcon className="h-4 w-4 mr-1" />
+                    <span className="text-sm font-medium">Reject</span>
                   </button>
                 </>
               )}
