@@ -12,6 +12,7 @@ const Header: React.FC = () => {
     { name: 'Paket Wisata', href: '/paket-wisata' },
     { name: 'UMKM', href: '/umkm' },
     { name: 'Budaya', href: '/budaya' },
+    { name: 'Artikel', href: '/artikel' },
     { name: 'Kontak', href: '/kontak' },
   ];
 
@@ -25,7 +26,7 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-blue-600">
+            <Link to="/" className="text-2xl font-bold text-orange-600">
               Pulau Laiya
             </Link>
           </div>
@@ -38,8 +39,8 @@ const Header: React.FC = () => {
                 to={item.href}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive(item.href)
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                    ? 'text-orange-600 bg-orange-50'
+                    : 'text-gray-700 hover:text-orange-600 hover:bg-orange-50'
                 }`}
               >
                 {item.name}
@@ -51,9 +52,9 @@ const Header: React.FC = () => {
           <div className="hidden md:flex items-center">
             <Link
               to="/login"
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors"
             >
-              Admin Login
+              Login
             </Link>
           </div>
 
@@ -61,7 +62,7 @@ const Header: React.FC = () => {
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-orange-600 hover:bg-orange-50"
             >
               {isMenuOpen ? (
                 <XMarkIcon className="block h-6 w-6" />
@@ -84,8 +85,8 @@ const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   isActive(item.href)
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                    ? 'text-orange-600 bg-orange-50'
+                    : 'text-gray-700 hover:text-orange-600 hover:bg-orange-50'
                 }`}
               >
                 {item.name}
@@ -94,9 +95,9 @@ const Header: React.FC = () => {
             <Link
               to="/login"
               onClick={() => setIsMenuOpen(false)}
-              className="block px-3 py-2 text-base font-medium text-blue-600 hover:bg-blue-50"
+              className="block px-3 py-2 text-base font-medium text-orange-600 hover:bg-orange-50"
             >
-              Admin Login
+              Login
             </Link>
           </div>
         </div>

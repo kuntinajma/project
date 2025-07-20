@@ -32,7 +32,7 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const API_BASE_URL = 'https://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
