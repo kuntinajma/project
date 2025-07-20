@@ -189,23 +189,23 @@ const TourPackages: React.FC = () => {
               </div>
               
               <div className="flex space-x-2">
-                <button className="flex-1 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                <button className="flex items-center justify-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors">
                   <EyeIcon className="h-4 w-4 inline mr-1" />
-                  View
+                  <span className="text-sm font-medium">View</span>
                 </button>
                 <button 
                   onClick={() => handleEditPackage(pkg)}
-                  className="flex-1 text-green-600 hover:text-green-700 text-sm font-medium"
+                  className="flex items-center justify-center px-3 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
                 >
                   <PencilIcon className="h-4 w-4 inline mr-1" />
-                  Edit
+                  <span className="text-sm font-medium">Edit</span>
                 </button>
                 <button 
                   onClick={() => handleDeletePackage(pkg)}
-                  className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium"
+                  className="flex items-center justify-center px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
                 >
                   <TrashIcon className="h-4 w-4 inline mr-1" />
-                  Delete
+                  <span className="text-sm font-medium">Delete</span>
                 </button>
               </div>
             </div>
