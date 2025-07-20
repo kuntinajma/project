@@ -34,6 +34,7 @@ const Footer: React.FC = () => {
               <li><Link to="/paket-wisata" className="text-gray-300 hover:text-orange-400 transition-colors">Paket Wisata</Link></li>
               <li><Link to="/umkm" className="text-gray-300 hover:text-orange-400 transition-colors">UMKM</Link></li>
               <li><Link to="/budaya" className="text-gray-300 hover:text-orange-400 transition-colors">Budaya</Link></li>
+              <li><Link to="/artikel" className="text-gray-300 hover:text-orange-400 transition-colors">Artikel</Link></li>
               <li><Link to="/kontak" className="text-gray-300 hover:text-orange-400 transition-colors">Kontak</Link></li>
             </ul>
           </div>

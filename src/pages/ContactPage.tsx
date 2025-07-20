@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Send, Upload, User, GraduationCap } from 'lucide-react';
 import { StarIcon as SolidStar } from '@heroicons/react/24/solid';
 import { StarIcon as OutlineStar } from '@heroicons/react/24/outline';

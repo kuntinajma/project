@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, Calendar, User, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { articles } from '../data/mockData';
 import { Article } from '../types';
 
@@ -115,12 +116,12 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
                       <button className="text-blue-700 hover:text-blue-800">LinkedIn</button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => onNavigate('contact')}
+                  <Link
+                    to="/kontak#contribute"
                     className="text-orange-600 hover:text-orange-700 font-medium"
                   >
                     Contact Author
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -245,12 +246,12 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
             with fellow travelers. Your contribution helps build a valuable resource 
             for future visitors.
           </p>
-          <button
-            onClick={() => onNavigate('contact')}
-            className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
+          <Link
+            to="/kontak#contribute"
+            className="inline-block bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
           >
             Contribute Article
-          </button>
+          </Link>
         </div>
       </div>
     </div>

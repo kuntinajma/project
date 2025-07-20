@@ -12,6 +12,7 @@ import PackagesPage from './pages/TourPackagesPage';
 import UMKMPage from './pages/MSMEPage';
 import CulturePage from './pages/CulturePage';
 import ContactPage from './pages/ContactPage';
+import ArticlesPage from './pages/ArticlesPage';
 import LoginPage from './pages/public/LoginPage';
 
 function AppWrapper() {
@@ -54,6 +55,7 @@ function App({ onNavigate }: { onNavigate: (page: string) => void }) {
         <Route path="paket-wisata" element={<PackagesPage onNavigate={onNavigate} />} />
         <Route path="umkm" element={<UMKMPage onNavigate={onNavigate} />} />
         <Route path="budaya" element={<CulturePage onNavigate={onNavigate} />} />
+        <Route path="artikel" element={<ArticlesPage onNavigate={onNavigate} />} />
         <Route path="kontak" element={<ContactPage onNavigate={onNavigate} />} />
       </Route>
       <Route path="/login" element={<LoginPage />} />
