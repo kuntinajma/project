@@ -13,7 +13,9 @@ import {
   UserIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
-  XMarkIcon
+  XMarkIcon,
+  ChatBubbleLeftRightIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 const AdminLayout: React.FC = () => {
@@ -37,6 +39,8 @@ const AdminLayout: React.FC = () => {
           { name: 'Tour Packages', href: '/admin/packages', icon: CubeIcon },
           { name: 'UMKM', href: '/admin/umkm', icon: BuildingStorefrontIcon },
           { name: 'Articles', href: '/admin/articles', icon: DocumentTextIcon },
+          { name: 'Contact Messages', href: '/admin/contact-messages', icon: ChatBubbleLeftRightIcon },
+          { name: 'Testimonials', href: '/admin/testimonials', icon: StarIcon },
           { name: 'Settings', href: '/admin/settings', icon: CogIcon },
         ];
       case 'admin':
@@ -47,6 +51,8 @@ const AdminLayout: React.FC = () => {
           { name: 'Tour Packages', href: '/admin/packages', icon: CubeIcon },
           { name: 'UMKM', href: '/admin/umkm', icon: BuildingStorefrontIcon },
           { name: 'Articles', href: '/admin/articles', icon: DocumentTextIcon },
+          { name: 'Contact Messages', href: '/admin/contact-messages', icon: ChatBubbleLeftRightIcon },
+          { name: 'Testimonials', href: '/admin/testimonials', icon: StarIcon },
         ];
       case 'msme':
         return [

@@ -29,6 +29,8 @@ import Products from './pages/admin/Products';
 import Articles from './pages/admin/Articles';
 import ProfileUMKM from './pages/admin/ProfileUMKM';
 import Profile from './pages/admin/Profile';
+import ContactMessages from './pages/admin/ContactMessages';
+import Testimonials from './pages/admin/Testimonials';
 
 function AppWrapper() {
   const navigate = useNavigate();
@@ -93,6 +95,8 @@ function App({ onNavigate }: { onNavigate: (page: string) => void }) {
         <Route path="articles" element={<Articles />} />
         <Route path="profile-umkm" element={<ProfileUMKM />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="contact-messages" element={<ContactMessages />} />
+        <Route path="testimonials" element={<Testimonials />} />
       </Route>
     </Routes>
   );
