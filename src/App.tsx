@@ -97,6 +97,7 @@ function App({ onNavigate }: { onNavigate: (page: string) => void }) {
         <Route path="profile" element={<Profile />} />
         <Route path="contact-messages" element={<ContactMessages />} />
         <Route path="testimonials" element={<Testimonials />} />
+        <Route path="transportation" element={<Transportation />} />
       </Route>
     </Routes>
   );
