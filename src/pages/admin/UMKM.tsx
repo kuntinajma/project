@@ -7,10 +7,13 @@ import {
   XCircleIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
+import Toast from '../../components/common/Toast';
+import { useToast } from '../../hooks/useToast';
 
 const UMKM: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const { toast, showToast, hideToast } = useToast();
 
   const umkmPartners = [
     { 
@@ -82,6 +85,14 @@ const UMKM: React.FC = () => {
       case 'rejected': return <XCircleIcon className="h-4 w-4" />;
       default: return null;
     }
+  };
+
+  const handleApproveUMKM = (umkm: any) => {
+    showToast('success', `UMKM ${umkm.businessName} berhasil disetujui`);
+  };
+
+  const handleRejectUMKM = (umkm: any) => {
+    showToast('error', `UMKM ${umkm.businessName} ditolak`);
   };
 
   return (
@@ -174,10 +185,16 @@ const UMKM: React.FC = () => {
               </button>
               {umkm.status === 'pending' && (
                 <>
-                  <button className="flex-1 text-green-600 hover:text-green-700 text-sm font-medium">
+                  <button 
+                    onClick={() => handleApproveUMKM(umkm)}
+                    className="flex-1 text-green-600 hover:text-green-700 text-sm font-medium"
+                  >
                     Approve
                   </button>
-                  <button className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium">
+                  <button 
+                    onClick={() => handleRejectUMKM(umkm)}
+                    className="flex-1 text-red-600 hover:text-red-700 text-sm font-medium"
+                  >
                     Reject
                   </button>
                 </>
@@ -215,6 +232,15 @@ const UMKM: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };
