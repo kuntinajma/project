@@ -15,7 +15,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   ChatBubbleLeftRightIcon,
-  StarIcon
+  StarIcon,
+  TruckIcon
 } from '@heroicons/react/24/outline';
 
 const AdminLayout: React.FC = () => {
