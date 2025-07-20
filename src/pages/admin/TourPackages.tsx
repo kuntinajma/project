@@ -312,6 +312,16 @@ const TourPackages: React.FC = () => {
                     </div>
                     
                     <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Booking URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://wa.me/6281234567890?text=Hi, I want to book..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">URL WhatsApp dengan pesan booking otomatis</p>
+                    </div>
+                    
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Facilities (one per line)</label>
                       <textarea
                         rows={4}

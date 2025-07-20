@@ -311,27 +311,22 @@ const Settings: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Island Facilities</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-                  type="text"
             { icon: '📶', label: 'Wi-Fi', available: true },
-                  placeholder="https://instagram.com/youraccount"
             { icon: '⚡', label: 'Electricity', available: true },
             { icon: '🏪', label: 'Local Store', available: true },
             { icon: '🏥', label: 'Medical', available: false },
             { icon: '🍽️', label: 'Restaurant', available: true },
           ].map((facility, index) => (
             <div key={index} className="flex items-center space-x-2 p-3 border rounded-lg">
-                  type="text"
+              <span className="text-2xl">{facility.icon}</span>
               <div className="flex-1">
-                  placeholder="https://youtube.com/@yourchannel"
                 <p className="text-sm font-medium">{facility.label}</p>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
                     defaultChecked={facility.available}
-                  type="text"
-                  type="text"
-                  placeholder="https://facebook.com/yourpage"
-                  placeholder="https://tiktok.com/@youraccount"
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
                   <span className="ml-1 text-xs text-gray-600">Available</span>
                 </label>
               </div>
