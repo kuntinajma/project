@@ -197,10 +197,10 @@ const Settings: React.FC = () => {
   const renderSocialSettings = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Facebook Page</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">TikTok Account</label>
         <input
           type="url"
-          defaultValue="https://facebook.com/pulaulaiya"
+          defaultValue="https://tiktok.com/@pulaulaiya"
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
       </div>
