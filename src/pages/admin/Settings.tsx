@@ -5,13 +5,24 @@ import {
   PhoneIcon, 
   EnvelopeIcon,
   GlobeAltIcon,
-  PhotoIcon
+  PhotoIcon,
+  PlusIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import Toast from '../../components/common/Toast';
 import { useToast } from '../../hooks/useToast';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const [facilities, setFacilities] = useState([
+    { id: 1, icon: '📶', label: 'Wi-Fi', available: true },
+    { id: 2, icon: '⚡', label: 'Electricity', available: true },
+    { id: 3, icon: '🏪', label: 'Local Store', available: true },
+    { id: 4, icon: '🏥', label: 'Medical', available: false },
+    { id: 5, icon: '🍽️', label: 'Restaurant', available: true },
+  ]);
+  const [newFacility, setNewFacility] = useState({ icon: '', label: '', available: true });
+  const [showAddForm, setShowAddForm] = useState(false);
   const { toast, showToast, hideToast } = useToast();
 
   const handleSaveSettings = () => {
@@ -25,6 +36,29 @@ const Settings: React.FC = () => {
     showToast('info', 'Pengaturan direset ke nilai default');
   };
 
+  const handleAddFacility = () => {
+    if (newFacility.icon && newFacility.label) {
+      const facility = {
+        id: Date.now(),
+        ...newFacility
+      };
+      setFacilities([...facilities, facility]);
+      setNewFacility({ icon: '', label: '', available: true });
+      setShowAddForm(false);
+      showToast('success', `Fasilitas ${newFacility.label} berhasil ditambahkan`);
+    }
+  };
+
+  const handleDeleteFacility = (id: number, label: string) => {
+    setFacilities(facilities.filter(f => f.id !== id));
+    showToast('success', `Fasilitas ${label} berhasil dihapus`);
+  };
+
+  const handleToggleFacility = (id: number, available: boolean) => {
+    setFacilities(facilities.map(f => 
+      f.id === id ? { ...f, available } : f
+    ));
+  };
   const tabs = [
     { id: 'general', label: 'General', icon: CogIcon },
     { id: 'contact', label: 'Contact Info', icon: PhoneIcon },
@@ -308,28 +342,85 @@ const Settings: React.FC = () => {
 
       {/* Island Facilities */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Island Facilities</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[
-            { icon: '📶', label: 'Wi-Fi', available: true },
-            { icon: '⚡', label: 'Electricity', available: true },
-            { icon: '🏪', label: 'Local Store', available: true },
-            { icon: '🏥', label: 'Medical', available: false },
-            { icon: '🍽️', label: 'Restaurant', available: true },
-          ].map((facility, index) => (
-            <div key={index} className="flex items-center space-x-2 p-3 border rounded-lg">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Island Facilities</h3>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            <PlusIcon className="h-4 w-4" />
+            <span>Add Facility</span>
+          </button>
+        </div>
+        
+        {/* Add Facility Form */}
+        {showAddForm && (
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <h4 className="font-medium text-gray-900 mb-3">Add New Facility</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Icon (Emoji)</label>
+                <input
+                  type="text"
+                  value={newFacility.icon}
+                  onChange={(e) => setNewFacility({ ...newFacility, icon: e.target.value })}
+                  placeholder="🏊"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Facility Name</label>
+                <input
+                  type="text"
+                  value={newFacility.label}
+                  onChange={(e) => setNewFacility({ ...newFacility, label: e.target.value })}
+                  placeholder="Swimming Pool"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex items-end space-x-2">
+                <button
+                  onClick={handleAddFacility}
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {facilities.map((facility) => (
+            <div key={facility.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center space-x-3">
               <span className="text-2xl">{facility.icon}</span>
-              <div className="flex-1">
+                <div>
                 <p className="text-sm font-medium">{facility.label}</p>
-                <label className="flex items-center">
+                  <label className="flex items-center mt-1">
                   <input
                     type="checkbox"
-                    defaultChecked={facility.available}
+                      checked={facility.available}
+                      onChange={(e) => handleToggleFacility(facility.id, e.target.checked)}
                     className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
                   <span className="ml-1 text-xs text-gray-600">Available</span>
                 </label>
               </div>
+              </div>
+              <button
+                onClick={() => handleDeleteFacility(facility.id, facility.label)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-md transition-colors"
+                title="Delete facility"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
             </div>
           ))}
         </div>
