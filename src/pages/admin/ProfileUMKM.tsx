@@ -24,6 +24,7 @@ const ProfileUMKM: React.FC = () => {
     facebook: 'Kerajinan Laiya',
     shopee: 'https://shopee.co.id/kerajinanlaiya',
     tiktok: '@kerajinanlaiya',
+    website: '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -204,6 +205,19 @@ const ProfileUMKM: React.FC = () => {
                 value={profileData.tiktok}
                 onChange={(e) => handleInputChange('tiktok', e.target.value)}
                 placeholder="@yourusername"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Website/Online Store</label>
+              <input
+                type="text"
+                value={profileData.website}
+                onChange={(e) => handleInputChange('website', e.target.value)}
+                placeholder="https://yourwebsite.com"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>

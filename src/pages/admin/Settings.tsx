@@ -146,20 +146,12 @@ const Settings: React.FC = () => {
   const renderMediaSettings = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video</label>
-        <div className="flex items-center space-x-4">
-          <div className="w-32 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-            <PhotoIcon className="h-8 w-8 text-gray-400" />
-          </div>
-          <div className="flex-1">
-            <input
-              type="file"
-              accept="video/*"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-            <p className="text-xs text-gray-500 mt-1">MP4, MOV, or AVI. Max size 100MB.</p>
-          </div>
-        </div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (YouTube)</label>
+        <input
+          type="url"
+          defaultValue="https://www.youtube.com/watch?v=Gh0K71uxucM"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+        />
       </div>
       
       <div>
@@ -319,23 +311,27 @@ const Settings: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Island Facilities</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { icon: '🚿', label: 'Bathroom', available: true },
+                  type="text"
             { icon: '📶', label: 'Wi-Fi', available: true },
+                  placeholder="https://instagram.com/youraccount"
             { icon: '⚡', label: 'Electricity', available: true },
             { icon: '🏪', label: 'Local Store', available: true },
             { icon: '🏥', label: 'Medical', available: false },
             { icon: '🍽️', label: 'Restaurant', available: true },
           ].map((facility, index) => (
             <div key={index} className="flex items-center space-x-2 p-3 border rounded-lg">
-              <span className="text-2xl">{facility.icon}</span>
+                  type="text"
               <div className="flex-1">
+                  placeholder="https://youtube.com/@yourchannel"
                 <p className="text-sm font-medium">{facility.label}</p>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
                     defaultChecked={facility.available}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
+                  type="text"
+                  type="text"
+                  placeholder="https://facebook.com/yourpage"
+                  placeholder="https://tiktok.com/@youraccount"
                   <span className="ml-1 text-xs text-gray-600">Available</span>
                 </label>
               </div>
