@@ -3,50 +3,56 @@ import { http } from "../lib/http";
 import { Destination } from "../types";
 
 interface DestinationResponse {
-  success: boolean;
-  data: {
-    destinations: Destination[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalItems: number;
-      itemsPerPage: number;
-    };
-  };
+	success: boolean;
+	data: {
+		destinations: Destination[];
+		pagination: {
+			currentPage: number;
+			totalPages: number;
+			totalItems: number;
+			itemsPerPage: number;
+		};
+	};
 }
 
 export type DestinationQuery = {
-  page?: number;
-  limit?: number;
-  category?: string;
-  search?: string;
+	page?: number;
+	limit?: number;
+	category?: string;
+	search?: string;
 };
 
 const defaultQuery: DestinationQuery = {
-  page: 1,
-  limit: 15,
+	page: 1,
+	limit: 15,
 };
 
 export default function useDestinations(
-  query: DestinationQuery = defaultQuery
+	query: DestinationQuery = defaultQuery
 ) {
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+	const [result, setResult] = useState<DestinationResponse | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<Error | null>(null);
 
-    const options = {
-      method: "GET",
-      query: query,
-    };
+	useEffect(() => {
+		setLoading(true);
 
-    http<DestinationResponse>("/destinations", options)
-      .then((res) => setDestinations(res.data.destinations))
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [query]);
+		const options = {
+			method: "GET",
+			query: query,
+		};
 
-  return { destinations, loading, error };
+		http<DestinationResponse>("/destinations", options)
+			.then((res) => setResult(res))
+			.catch(setError)
+			.finally(() => setLoading(false));
+	}, [query]);
+
+	return {
+		destinations: result?.data.destinations ?? [],
+		pagination: result?.data.pagination,
+		loading: loading,
+		error: error
+	};
 }

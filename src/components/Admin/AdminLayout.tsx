@@ -7,28 +7,74 @@ import {
   CubeIcon,
   BuildingStorefrontIcon,
   SparklesIcon,
-  CalendarDaysIcon,
-  ChatBubbleLeftRightIcon,
+  UsersIcon,
+  CogIcon,
+  DocumentTextIcon,
+  UserIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
-  XMarkIcon
+  XMarkIcon,
+  ChatBubbleLeftRightIcon,
+  StarIcon,
+  TruckIcon
 } from '@heroicons/react/24/outline';
 
 const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { admin, logout } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navigation = [
-    { name: 'Dashboard', href: '/admin', icon: HomeIcon },
-    { name: 'Destinasi', href: '/admin/destinasi', icon: MapPinIcon },
-    { name: 'Paket Wisata', href: '/admin/paket-wisata', icon: CubeIcon },
-    { name: 'UMKM', href: '/admin/umkm', icon: BuildingStorefrontIcon },
-    { name: 'Budaya', href: '/admin/budaya', icon: SparklesIcon },
-    { name: 'Booking', href: '/admin/booking', icon: CalendarDaysIcon },
-    { name: 'Kontak', href: '/admin/kontak', icon: ChatBubbleLeftRightIcon },
-  ];
+  const getNavigationItems = () => {
+    const baseItems = [
+      { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
+    ];
+
+    switch (user?.role) {
+      case 'superadmin':
+        return [
+          ...baseItems,
+          { name: 'Users', href: '/admin/users', icon: UsersIcon },
+          { name: 'Destinations', href: '/admin/destinations', icon: MapPinIcon },
+          { name: 'Culture', href: '/admin/culture', icon: SparklesIcon },
+          { name: 'Tour Packages', href: '/admin/packages', icon: CubeIcon },
+          { name: 'UMKM', href: '/admin/umkm', icon: BuildingStorefrontIcon },
+          { name: 'Transportation', href: '/admin/transportation', icon: TruckIcon },
+          { name: 'Articles', href: '/admin/articles', icon: DocumentTextIcon },
+          { name: 'Contact Messages', href: '/admin/contact-messages', icon: ChatBubbleLeftRightIcon },
+          { name: 'Testimonials', href: '/admin/testimonials', icon: StarIcon },
+          { name: 'Settings', href: '/admin/settings', icon: CogIcon },
+        ];
+      case 'admin':
+        return [
+          ...baseItems,
+          { name: 'Destinations', href: '/admin/destinations', icon: MapPinIcon },
+          { name: 'Culture', href: '/admin/culture', icon: SparklesIcon },
+          { name: 'Tour Packages', href: '/admin/packages', icon: CubeIcon },
+          { name: 'UMKM', href: '/admin/umkm', icon: BuildingStorefrontIcon },
+          { name: 'Transportation', href: '/admin/transportation', icon: TruckIcon },
+          { name: 'Articles', href: '/admin/articles', icon: DocumentTextIcon },
+          { name: 'Contact Messages', href: '/admin/contact-messages', icon: ChatBubbleLeftRightIcon },
+          { name: 'Testimonials', href: '/admin/testimonials', icon: StarIcon },
+        ];
+      case 'msme':
+        return [
+          ...baseItems,
+          { name: 'My Products', href: '/admin/products', icon: CubeIcon },
+          { name: 'UMKM Profile', href: '/admin/profile-umkm', icon: UserIcon },
+        ];
+      case 'contributor':
+        return [
+          ...baseItems,
+          { name: 'My Articles', href: '/admin/articles', icon: DocumentTextIcon },
+          { name: 'Profile', href: '/admin/profile', icon: UserIcon },
+        ];
+      default:
+        return baseItems;
+    }
+  };
+
+  const navigationItems = getNavigationItems();
 
   const handleLogout = () => {
     logout();
@@ -36,14 +82,14 @@ const AdminLayout: React.FC = () => {
   };
 
   const isActive = (href: string) => {
-    if (href === '/admin') {
-      return location.pathname === href;
+    if (href === '/admin/dashboard') {
+      return location.pathname === href || location.pathname === '/admin';
     }
     return location.pathname.startsWith(href);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex flex-row">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -53,11 +99,11 @@ const AdminLayout: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-blue-600">Admin Panel</h1>
+          <h1 className="text-xl font-bold text-orange-600">Pulau Laiya Admin</h1>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
@@ -68,7 +114,7 @@ const AdminLayout: React.FC = () => {
 
         <nav className="mt-6 px-3">
           <div className="space-y-1">
-            {navigation.map((item) => {
+            {navigationItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
@@ -77,7 +123,7 @@ const AdminLayout: React.FC = () => {
                   onClick={() => setSidebarOpen(false)}
                   className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive(item.href)
-                      ? 'bg-blue-100 text-blue-700'
+                      ? 'bg-orange-100 text-orange-700'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
@@ -93,15 +139,15 @@ const AdminLayout: React.FC = () => {
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
           <div className="flex items-center mb-3">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
-                  {admin?.full_name?.charAt(0) || 'A'}
+                  {user?.name?.charAt(0) || 'A'}
                 </span>
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900">{admin?.full_name}</p>
-              <p className="text-xs text-gray-500">{admin?.role}</p>
+              <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+              <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
             </div>
           </div>
           <button
@@ -115,7 +161,7 @@ const AdminLayout: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="w-full">
         {/* Top bar */}
         <div className="sticky top-0 z-10 bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -129,10 +175,9 @@ const AdminLayout: React.FC = () => {
             <div className="flex items-center space-x-4">
               <Link
                 to="/"
-                target="_blank"
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className=" text-orange-600 hover:text-orange-700"
               >
-                Lihat Website
+                Home
               </Link>
             </div>
           </div>

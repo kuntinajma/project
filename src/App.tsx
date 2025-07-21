@@ -31,84 +31,85 @@ import ProfileUMKM from './pages/admin/ProfileUMKM';
 import Profile from './pages/admin/Profile';
 import ContactMessages from './pages/admin/ContactMessages';
 import Testimonials from './pages/admin/Testimonials';
+import Transportation from "./pages/admin/Transportation";
 
 function AppWrapper() {
-  const navigate = useNavigate();
+	const navigate = useNavigate();
 
-  const handleNavigate = (page: string) => {
-    switch (page) {
-      case 'destinations':
-        navigate('/destinasi');
-        break;
-      case 'packages':
-        navigate('/paket-wisata');
-        break;
-      case 'culture':
-        navigate('/budaya');
-        break;
-      case 'msme':
-        navigate('/umkm');
-        break;
-      case 'articles':
-        navigate('/artikel');
-        break;
-      case 'contact':
-        navigate('/kontak');
-        break;
-      default:
-        navigate('/');
-    }
-  };
+	const handleNavigate = (page: string) => {
+		switch (page) {
+			case 'destinations':
+				navigate('/destinasi');
+				break;
+			case 'packages':
+				navigate('/paket-wisata');
+				break;
+			case 'culture':
+				navigate('/budaya');
+				break;
+			case 'msme':
+				navigate('/umkm');
+				break;
+			case 'articles':
+				navigate('/artikel');
+				break;
+			case 'contact':
+				navigate('/kontak');
+				break;
+			default:
+				navigate('/');
+		}
+	};
 
-  return <App onNavigate={handleNavigate} />;
+	return <App onNavigate={handleNavigate} />;
 }
 
 function App({ onNavigate }: { onNavigate: (page: string) => void }) {
-  return (
-    <Routes>
-      <Route path="/" element={<PublicLayout />}>
-        <Route index element={<HomePage onNavigate={onNavigate} />} />
-        <Route path="destinasi" element={<DestinationsPage onNavigate={onNavigate} />} />
-        <Route path="paket-wisata" element={<PackagesPage onNavigate={onNavigate} />} />
-        <Route path="umkm" element={<UMKMPage onNavigate={onNavigate} />} />
-        <Route path="budaya" element={<CulturePage onNavigate={onNavigate} />} />
-        <Route path="artikel" element={<ArticlesPage onNavigate={onNavigate} />} />
-        <Route path="kontak" element={<ContactPage onNavigate={onNavigate} />} />
-      </Route>
-      <Route path="/login" element={<LoginPage />} />
-      
-      {/* Admin Routes */}
-      <Route path="/admin" element={
-        <ProtectedRoute>
-          <AdminLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<Dashboard />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="users" element={<Users />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="destinations" element={<Destinations />} />
-        <Route path="culture" element={<Culture />} />
-        <Route path="packages" element={<TourPackages />} />
-        <Route path="umkm" element={<UMKM />} />
-        <Route path="products" element={<Products />} />
-        <Route path="articles" element={<Articles />} />
-        <Route path="profile-umkm" element={<ProfileUMKM />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="contact-messages" element={<ContactMessages />} />
-        <Route path="testimonials" element={<Testimonials />} />
-        <Route path="transportation" element={<Transportation />} />
-      </Route>
-    </Routes>
-  );
+	return (
+		<Routes>
+			<Route path="/" element={<PublicLayout />}>
+				<Route index element={<HomePage onNavigate={onNavigate} />} />
+				<Route path="destinasi" element={<DestinationsPage onNavigate={onNavigate} />} />
+				<Route path="paket-wisata" element={<PackagesPage onNavigate={onNavigate} />} />
+				<Route path="umkm" element={<UMKMPage onNavigate={onNavigate} />} />
+				<Route path="budaya" element={<CulturePage onNavigate={onNavigate} />} />
+				<Route path="artikel" element={<ArticlesPage onNavigate={onNavigate} />} />
+				<Route path="kontak" element={<ContactPage onNavigate={onNavigate} />} />
+			</Route>
+			<Route path="/login" element={<LoginPage />} />
+
+			{/* Admin Routes */}
+			<Route path="/admin" element={
+				<ProtectedRoute>
+					<AdminLayout />
+				</ProtectedRoute>
+			}>
+				<Route index element={<Dashboard />} />
+				<Route path="dashboard" element={<Dashboard />} />
+				<Route path="users" element={<Users />} />
+				<Route path="settings" element={<Settings />} />
+				<Route path="destinations" element={<Destinations />} />
+				<Route path="culture" element={<Culture />} />
+				<Route path="packages" element={<TourPackages />} />
+				<Route path="umkm" element={<UMKM />} />
+				<Route path="products" element={<Products />} />
+				<Route path="articles" element={<Articles />} />
+				<Route path="profile-umkm" element={<ProfileUMKM />} />
+				<Route path="profile" element={<Profile />} />
+				<Route path="contact-messages" element={<ContactMessages />} />
+				<Route path="testimonials" element={<Testimonials />} />
+				<Route path="transportation" element={<Transportation />} />
+			</Route>
+		</Routes>
+	);
 }
 
 export default function RootApp() {
-  return (
-    <AuthProvider>
-      <Router>
-        <AppWrapper />
-      </Router>
-    </AuthProvider>
-  );
+	return (
+		<AuthProvider>
+			<Router>
+				<AppWrapper />
+			</Router>
+		</AuthProvider>
+	);
 }
