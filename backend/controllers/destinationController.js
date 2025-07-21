@@ -1,8 +1,24 @@
 const { pool } = require("../config/database");
+
+const path = require("path");
+const fs = require("fs");
+const {
+  getPublicFileUrl,
+  deleteFile,
+} = require("../utils/fileHelper"); // Sesuaikan path jika perlu
+
 const DESTINATION_CATEGORIES = require("../constants/destinationCategories");
 
 const destinationCategories = Object.values(DESTINATION_CATEGORIES);
 
+function isUrl(string) {
+  try {
+    const url = new URL(string);
+    return ["http:", "https:"].includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
 // format raw db data to desired JSON output
 function formatDestination(row) {
   return {
@@ -11,12 +27,23 @@ function formatDestination(row) {
     shortDescription: row.short_description,
     description: row.description,
     category: row.category,
-    image: row.image ?? null,
+    // Jika image ada: cek apakah sudah URL, jika tidak → buat jadi public URL
+    image: row.image
+      ? isUrl(row.image)
+        ? row.image
+        : getPublicFileUrl(row.image)
+      : null,
     location:
       row.latitude != null && row.longitude != null
         ? { lat: Number(row.latitude), lng: Number(row.longitude) }
         : null,
-    gallery: row.gallery ? JSON.parse(row.gallery) : null,
+
+    // Gallery: proses setiap item
+    gallery: row.gallery
+      ? JSON.parse(row.gallery).map((filename) =>
+          isUrl(filename) ? filename : getPublicFileUrl(filename)
+        )
+      : null,
   };
 }
 
@@ -187,6 +214,50 @@ const updateDestination = async (req, res) => {
     const latitude = location?.lat ?? null;
     const longitude = location?.lng ?? null;
 
+    // 🔍 Ambil data lama sebelum update
+    const [oldRows] = await pool.execute(
+      "SELECT image, gallery FROM destinations WHERE id = ?",
+      [id]
+    );
+
+    if (oldRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Destinasi tidak ditemukan",
+      });
+    }
+
+    const oldData = oldRows[0];
+
+    // 🗑️ Hapus file lama jika ada dan diganti
+    const filesToDelete = [];
+
+    // Tambahkan image lama jika berbeda atau di-null
+    if (oldData.image && oldData.image !== image) {
+      filesToDelete.push(oldData.image);
+    }
+
+    let oldGallery = [];
+    if (oldData.gallery) {
+      try {
+        oldGallery = JSON.parse(oldData.gallery);
+      } catch (e) {
+        console.warn(`Gagal parse gallery lama untuk destinasi ${id}`);
+      }
+    }
+
+    // Tambahkan file galeri lama yang tidak ada di gallery baru
+    if (Array.isArray(gallery)) {
+      oldGallery.forEach((file) => {
+        if (!gallery.includes(file)) {
+          filesToDelete.push(file);
+        }
+      });
+    } else {
+      // Jika gallery baru null/unset, hapus semua galeri lama
+      filesToDelete.push(...oldGallery);
+    }
+
     await pool.execute(
       `UPDATE destinations
        SET title = ?, short_description = ?, description = ?, category = ?, image = ?, latitude = ?, longitude = ?, gallery = ?
@@ -203,6 +274,11 @@ const updateDestination = async (req, res) => {
         id,
       ]
     );
+
+    // ❗ Hapus file setelah query sukses
+    filesToDelete.forEach((filename) => {
+      deleteFile(filename); // Gunakan helper kamu
+    });
 
     const [rows] = await pool.execute(
       "SELECT * FROM destinations WHERE id = ?",
@@ -235,6 +311,49 @@ const deleteDestination = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // 🔍 Ambil data lama sebelum update
+    const [oldRows] = await pool.execute(
+      "SELECT image, gallery FROM destinations WHERE id = ?",
+      [id]
+    );
+
+    if (oldRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Destinasi tidak ditemukan",
+      });
+    }
+
+    const oldData = oldRows[0];
+
+    // 🗑️ Hapus file lama jika ada dan diganti
+    const filesToDelete = [];
+
+    // Tambahkan image lama jika berbeda atau di-null
+    if (oldData.image) {
+      filesToDelete.push(oldData.image);
+    }
+
+    let oldGallery = [];
+    if (oldData.gallery) {
+      try {
+        oldGallery = JSON.parse(oldData.gallery);
+      } catch (e) {
+        console.warn(`Gagal parse gallery lama untuk destinasi ${id}`);
+      }
+    }
+
+    // Tambahkan file galeri lama yang tidak ada di gallery baru
+    if (Array.isArray(gallery)) {
+      oldGallery.forEach((file) => {
+        filesToDelete.push(file);
+      });
+    } else {
+      // Jika gallery baru null/unset, hapus semua galeri lama
+      filesToDelete.push(...oldGallery);
+    }
+
+    // do deleting
     const [result] = await pool.execute(
       "DELETE FROM destinations WHERE id = ?",
       [id]
@@ -246,6 +365,11 @@ const deleteDestination = async (req, res) => {
         message: "Destinasi tidak ditemukan",
       });
     }
+
+    // ❗ Hapus file setelah query sukses
+    filesToDelete.forEach((filename) => {
+      deleteFile(filename); // Gunakan helper kamu
+    });
 
     res.json({
       success: true,

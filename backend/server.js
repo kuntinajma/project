@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
+const path = require("path");
 require("dotenv").config();
 
 const { testConnection } = require("./config/database");
@@ -11,7 +12,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // 👈 Matikan ini
+    // atau atur:
+    // crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
 
 // CORS configuration
 app.use(
@@ -43,7 +50,20 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Static files
-app.use("/uploads", express.static("uploads"));
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.removeHeader("Cross-Origin-Resource-Policy");
+    res.header("Access-Control-Allow-Origin", "*"); // 👈 Allow any origin
+    res.header("Access-Control-Allow-Methods", "GET, HEAD");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    next();
+  },
+  express.static(path.join(__dirname, "uploads"))
+);
 
 // Test database connection
 testConnection();

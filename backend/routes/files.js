@@ -15,6 +15,10 @@ router.get("/upload/:filename", (req, res) => {
   const fs = require("fs");
 
   const filePath = path.join(getUploadPath(), req.params.filename);
+
+  // Set CORS header
+  res.header("Access-Control-Allow-Origin", "*");
+
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ success: false, message: "File not found" });
   }
