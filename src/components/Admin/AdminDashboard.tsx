@@ -10,7 +10,6 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  Clock
 } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {

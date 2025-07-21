@@ -7,10 +7,8 @@ import {
   Eye,
   Clock,
   CheckCircle,
-  XCircle,
   TrendingUp,
   Users,
-  Calendar,
   Award
 } from 'lucide-react';
 

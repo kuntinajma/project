@@ -3,7 +3,6 @@ import {
   ShoppingBag, 
   Plus,
   Edit,
-  Trash2,
   Eye,
   TrendingUp,
   Package,
@@ -11,7 +10,6 @@ import {
   Users,
   Star,
   MessageCircle,
-  ExternalLink
 } from 'lucide-react';
 
 const MSMEDashboard: React.FC = () => {
