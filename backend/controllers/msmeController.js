@@ -1,4 +1,4 @@
-const { pool } = require('../config/database');
+const { pool } = require("../config/database");
 
 // format raw db data to desired JSON output
 function formatMSME(row) {
@@ -10,7 +10,7 @@ function formatMSME(row) {
     instagram: row.instagram ?? null,
     shopee: row.shopee ?? null,
     whatsapp: row.whatsapp ?? null,
-    user_id: String(row.user_id)
+    user_id: String(row.user_id),
   };
 }
 
@@ -18,18 +18,21 @@ function formatMSME(row) {
 const getAllMSMEs = async (req, res) => {
   try {
     const { page = 1, limit = 10, search, user_id } = req.query;
-    const offset = (page - 1) * limit;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
 
-    let whereClause = 'WHERE 1=1';
+    // Build query using string concatenation instead of parameter binding for LIMIT/OFFSET
+    let whereClause = "WHERE 1=1";
     let params = [];
 
     if (user_id) {
-      whereClause += ' AND user_id = ?';
-      params.push(user_id);
+      whereClause += " AND user_id = ?";
+      params.push(parseInt(user_id));
     }
 
     if (search) {
-      whereClause += ' AND (brand LIKE ? OR description LIKE ?)';
+      whereClause += " AND (brand LIKE ? OR description LIKE ?)";
       params.push(`%${search}%`, `%${search}%`);
     }
 
@@ -39,35 +42,35 @@ const getAllMSMEs = async (req, res) => {
       params
     );
 
-    // Get MSMEs with pagination
+    // Get MSMEs with pagination - use string concatenation for LIMIT/OFFSET
     const [rows] = await pool.execute(
-      `SELECT * FROM msmes ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, parseInt(limit), offset]
+      `SELECT * FROM msmes ${whereClause} ORDER BY created_at DESC LIMIT ${limitNum} OFFSET ${offset}`,
+      params
     );
 
     // Format each row
     const msmes = rows.map(formatMSME);
 
     const total = countResult[0].total;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / limitNum);
 
     res.json({
       success: true,
       data: {
         msmes,
         pagination: {
-          currentPage: parseInt(page),
+          currentPage: pageNum,
           totalPages,
           totalItems: total,
-          itemsPerPage: parseInt(limit)
-        }
-      }
+          itemsPerPage: limitNum,
+        },
+      },
     });
   } catch (error) {
-    console.error('Get MSMEs error:', error);
+    console.error("Get MSMEs error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data MSME'
+      message: "Server error saat mengambil data MSME",
     });
   }
 };
@@ -77,27 +80,26 @@ const getMSMEById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [msmes] = await pool.execute(
-      'SELECT * FROM msmes WHERE id = ?',
-      [id]
-    );
+    const [msmes] = await pool.execute("SELECT * FROM msmes WHERE id = ?", [
+      id,
+    ]);
 
     if (msmes.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'MSME tidak ditemukan'
+        message: "MSME tidak ditemukan",
       });
     }
 
     res.json({
       success: true,
-      data: formatMSME(msmes[0])
+      data: formatMSME(msmes[0]),
     });
   } catch (error) {
-    console.error('Get MSME error:', error);
+    console.error("Get MSME error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data MSME'
+      message: "Server error saat mengambil data MSME",
     });
   }
 };
@@ -111,9 +113,9 @@ const createMSME = async (req, res) => {
       phone,
       instagram = null,
       shopee = null,
-      whatsapp = null
+      whatsapp = null,
     } = req.body;
-    
+
     // Get user_id from authenticated user
     const user_id = req.user.id;
 
@@ -127,32 +129,23 @@ const createMSME = async (req, res) => {
         whatsapp,
         user_id
       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        brand,
-        description,
-        phone,
-        instagram,
-        shopee,
-        whatsapp,
-        user_id
-      ]
+      [brand, description, phone, instagram, shopee, whatsapp, user_id]
     );
 
-    const [newMSME] = await pool.execute(
-      'SELECT * FROM msmes WHERE id = ?',
-      [result.insertId]
-    );
+    const [newMSME] = await pool.execute("SELECT * FROM msmes WHERE id = ?", [
+      result.insertId,
+    ]);
 
     res.status(201).json({
       success: true,
-      message: 'MSME berhasil dibuat',
-      data: formatMSME(newMSME[0])
+      message: "MSME berhasil dibuat",
+      data: formatMSME(newMSME[0]),
     });
   } catch (error) {
-    console.error('Create MSME error:', error);
+    console.error("Create MSME error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat membuat MSME'
+      message: "Server error saat membuat MSME",
     });
   }
 };
@@ -161,7 +154,7 @@ const createMSME = async (req, res) => {
 const updateMSME = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Get user_id from authenticated user
     const user_id = req.user.id;
 
@@ -171,19 +164,19 @@ const updateMSME = async (req, res) => {
       phone,
       instagram = null,
       shopee = null,
-      whatsapp = null
+      whatsapp = null,
     } = req.body;
 
     // Check if MSME belongs to authenticated user
     const [existingMSME] = await pool.execute(
-      'SELECT * FROM msmes WHERE id = ? AND user_id = ?',
+      "SELECT * FROM msmes WHERE id = ? AND user_id = ?",
       [id, user_id]
     );
 
     if (existingMSME.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'MSME tidak ditemukan atau Anda tidak memiliki akses'
+        message: "MSME tidak ditemukan atau Anda tidak memiliki akses",
       });
     }
 
@@ -191,40 +184,31 @@ const updateMSME = async (req, res) => {
       `UPDATE msmes
        SET brand = ?, description = ?, phone = ?, instagram = ?, shopee = ?, whatsapp = ?
        WHERE id = ? AND user_id = ?`,
-      [
-        brand,
-        description,
-        phone,
-        instagram,
-        shopee,
-        whatsapp,
-        id,
-        user_id
-      ]
+      [brand, description, phone, instagram, shopee, whatsapp, id, user_id]
     );
 
     const [rows] = await pool.execute(
-      'SELECT * FROM msmes WHERE id = ? AND user_id = ?',
+      "SELECT * FROM msmes WHERE id = ? AND user_id = ?",
       [id, user_id]
     );
 
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'MSME tidak ditemukan'
+        message: "MSME tidak ditemukan",
       });
     }
 
     res.json({
       success: true,
-      message: 'MSME berhasil diupdate',
-      data: formatMSME(rows[0])
+      message: "MSME berhasil diupdate",
+      data: formatMSME(rows[0]),
     });
   } catch (error) {
-    console.error('Update MSME error:', error);
+    console.error("Update MSME error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat update MSME'
+      message: "Server error saat update MSME",
     });
   }
 };
@@ -233,31 +217,31 @@ const updateMSME = async (req, res) => {
 const deleteMSME = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Get user_id from authenticated user
     const user_id = req.user.id;
 
     const [result] = await pool.execute(
-      'DELETE FROM msmes WHERE id = ? AND user_id = ?', 
+      "DELETE FROM msmes WHERE id = ? AND user_id = ?",
       [id, user_id]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'MSME tidak ditemukan atau Anda tidak memiliki akses'
+        message: "MSME tidak ditemukan atau Anda tidak memiliki akses",
       });
     }
 
     res.json({
       success: true,
-      message: 'MSME berhasil dihapus'
+      message: "MSME berhasil dihapus",
     });
   } catch (error) {
-    console.error('Delete MSME error:', error);
+    console.error("Delete MSME error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat menghapus MSME'
+      message: "Server error saat menghapus MSME",
     });
   }
 };
@@ -267,5 +251,5 @@ module.exports = {
   getMSMEById,
   createMSME,
   updateMSME,
-  deleteMSME
+  deleteMSME,
 };
