@@ -58,6 +58,12 @@ export async function http<T>(
   if (!headers["content-type"] && !(body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
+  
+  // Add authentication token if available
+  const token = localStorage.getItem("token");
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   // Handle body
   let finalBody: BodyInit | undefined;

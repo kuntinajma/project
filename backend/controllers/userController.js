@@ -1,11 +1,16 @@
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
+const USER_ROLE = require('../constants/roles');
 
 // Get all users (superadmin only)
 const getAllUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, role, search } = req.query;
-    const offset = (page - 1) * limit;
+    
+    // Convert pagination parameters to integers
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const offsetNum = (pageNum - 1) * limitNum;
 
     let whereClause = 'WHERE 1=1';
     let params = [];
@@ -26,27 +31,27 @@ const getAllUsers = async (req, res) => {
       params
     );
 
-    // Get users with pagination
-    const [users] = await pool.execute(
-      `SELECT id, name, email, role, is_active, created_at, updated_at
-       FROM users ${whereClause}
-       ORDER BY created_at DESC
-       LIMIT ? OFFSET ?`,
-      [...params, parseInt(limit), offset]
-    );
+    // Construct the query with direct values instead of parameters for LIMIT and OFFSET
+    const query = `SELECT id, name, email, role, is_active, created_at, updated_at
+                   FROM users ${whereClause}
+                   ORDER BY created_at DESC
+                   LIMIT ${limitNum} OFFSET ${offsetNum}`;
+
+    // Execute the query with only WHERE clause parameters
+    const [users] = await pool.execute(query, params);
 
     const total = countResult[0].total;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / limitNum);
 
     res.json({
       success: true,
       data: {
         users,
         pagination: {
-          currentPage: parseInt(page),
+          currentPage: pageNum,
           totalPages,
           totalItems: total,
-          itemsPerPage: parseInt(limit)
+          itemsPerPage: limitNum
         }
       }
     });
@@ -65,8 +70,7 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
 
     const [users] = await pool.execute(
-      `SELECT id, name, email, role, phone, avatar, university, major, bio,
-              is_active, is_verified, created_at, last_login
+      `SELECT id, name, email, role, is_active, created_at, updated_at
        FROM users WHERE id = ?`,
       [id]
     );
@@ -91,10 +95,18 @@ const getUserById = async (req, res) => {
   }
 };
 
-// Create new user (superadmin/admin only)
+// Create new user (superadmin only)
 const createUser = async (req, res) => {
   try {
-    const { name, email, password, role, phone, university, major, bio } = req.body;
+    const { name, email, password, role } = req.body;
+
+    // Validate role
+    if (!Object.values(USER_ROLE).includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role tidak valid'
+      });
+    }
 
     // Check if email already exists
     const [existingUsers] = await pool.execute(
@@ -115,15 +127,14 @@ const createUser = async (req, res) => {
 
     // Insert new user
     const [result] = await pool.execute(
-      `INSERT INTO users (name, email, password, role, phone, university, major, bio, is_verified)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, email, hashedPassword, role, phone, university, major, bio, true]
+      `INSERT INTO users (name, email, password, role, is_active)
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, email, hashedPassword, role, true]
     );
 
     // Get created user
     const [users] = await pool.execute(
-      `SELECT id, name, email, role, phone, university, major, bio,
-              is_active, is_verified, created_at
+      `SELECT id, name, email, role, is_active, created_at, updated_at
        FROM users WHERE id = ?`,
       [result.insertId]
     );
@@ -146,7 +157,7 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role, phone, university, major, bio, is_active, is_verified } = req.body;
+    const { name, email, role, is_active } = req.body;
 
     // Check if user exists
     const [existingUsers] = await pool.execute(
@@ -179,16 +190,14 @@ const updateUser = async (req, res) => {
     // Update user
     await pool.execute(
       `UPDATE users 
-       SET name = ?, email = ?, role = ?, phone = ?, university = ?, 
-           major = ?, bio = ?, is_active = ?, is_verified = ?
+       SET name = ?, email = ?, role = ?, is_active = ?
        WHERE id = ?`,
-      [name, email, role, phone, university, major, bio, is_active, is_verified, id]
+      [name, email, role, is_active, id]
     );
 
     // Get updated user
     const [users] = await pool.execute(
-      `SELECT id, name, email, role, phone, university, major, bio,
-              is_active, is_verified, created_at, last_login
+      `SELECT id, name, email, role, is_active, created_at, updated_at
        FROM users WHERE id = ?`,
       [id]
     );
@@ -226,7 +235,7 @@ const deleteUser = async (req, res) => {
     }
 
     // Prevent deleting superadmin
-    if (existingUsers[0].role === 'superadmin') {
+    if (existingUsers[0].role === USER_ROLE.SUPERADMIN) {
       return res.status(400).json({
         success: false,
         message: 'Tidak dapat menghapus superadmin'
@@ -268,7 +277,7 @@ const toggleUserStatus = async (req, res) => {
     }
 
     // Prevent deactivating superadmin
-    if (users[0].role === 'superadmin') {
+    if (users[0].role === USER_ROLE.SUPERADMIN) {
       return res.status(400).json({
         success: false,
         message: 'Tidak dapat menonaktifkan superadmin'
@@ -297,11 +306,78 @@ const toggleUserStatus = async (req, res) => {
   }
 };
 
+// Change user password (superadmin only)
+const changeUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password minimal 6 karakter'
+      });
+    }
+
+    // Check if user exists
+    const [existingUsers] = await pool.execute(
+      'SELECT id FROM users WHERE id = ?',
+      [id]
+    );
+
+    if (existingUsers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User tidak ditemukan'
+      });
+    }
+
+    // Hash new password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Update password
+    await pool.execute(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Password berhasil diubah'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error saat mengubah password'
+    });
+  }
+};
+
+// Get user roles (for dropdowns)
+const getUserRoles = async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: Object.values(USER_ROLE)
+    });
+  } catch (error) {
+    console.error('Get user roles error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error saat mengambil data roles'
+    });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
-  toggleUserStatus
+  toggleUserStatus,
+  changeUserPassword,
+  getUserRoles
 };

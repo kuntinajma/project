@@ -1,165 +1,114 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import axios from 'axios';
+import { Testimonial } from '../../hooks/useHome';
+import { useSettings, GeneralSettings } from '../../hooks/useSettings';
 
-interface Testimonial {
-  id: string;
-  name: string;
-  star: number;
-  origin?: string;
-  message: string;
-  created_at: string;
+interface TestimonialCarouselProps {
+  testimonials: Testimonial[];
 }
 
-const TestimonialCarousel: React.FC = () => {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+
+
+const TestimonialCarousel: React.FC<TestimonialCarouselProps> = ({ testimonials }) => {
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
+    island_name: 'Pulau Laiya',
+    village_name: 'Desa Mattiro Labangeng',
+    description: '',
+    welcome_message: ''
+  });
+
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [expandedReview, setExpandedReview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/testimonials');
-        if (response.data.success) {
-          setTestimonials(response.data.data);
-          setError(null);
-        } else {
-          setError('Gagal memuat testimoni.');
-        }
-      } catch (err) {
-        setError('Terjadi kesalahan saat memuat testimoni.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReviews();
-  }, []);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+  const handlePrev = () => {
+    setCurrentIndex((prevIndex) => (prevIndex === 0 ? testimonials.length - 1 : prevIndex - 1));
   };
 
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  const handleNext = () => {
+    setCurrentIndex((prevIndex) => (prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1));
   };
-
-  const toggleReview = (id: string) => {
-    setExpandedReview(expandedReview === id ? null : id);
-  };
-
-  if (loading) {
-    return (
-      <section className="py-16 bg-white text-center">
-        <p>Memuat testimoni...</p>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="py-16 bg-white text-center text-red-600">
-        <p>{error}</p>
-      </section>
-    );
-  }
 
   if (testimonials.length === 0) {
-    return (
-      <section className="py-16 bg-white text-center">
-        <p>Tidak ada testimoni tersedia.</p>
-      </section>
-    );
+    return null;
   }
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-gradient-to-r from-orange-50 to-blue-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Kata Pengunjung Kami
+            Apa Kata Mereka
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Pengalaman nyata dari wisatawan yang menemukan Pulau Laiya
+            Pengalaman pengunjung yang telah menikmati keindahan {generalSettings.island_name}
           </p>
         </div>
 
         <div className="relative">
-          {/* Carousel Container */}
-          <div className="overflow-hidden rounded-lg">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+          {/* Carousel Navigation */}
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 z-10">
+            <button
+              onClick={handlePrev}
+              className="p-2 rounded-full bg-white shadow-lg hover:bg-gray-100 transition-colors"
             >
-              {testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="w-full flex-shrink-0 px-4">
-                  <div className="bg-gradient-to-br from-orange-50 to-blue-50 rounded-lg p-8 shadow-lg">
-                    <div className="flex items-center mb-4">
-                      <div className="flex text-yellow-500">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            size={20}
-                            className={i < testimonial.star ? 'fill-current' : ''}
-                          />
-                        ))}
-                      </div>
-                      <span className="ml-2 text-sm text-gray-600">
-                        {new Date(testimonial.created_at).toISOString().split('T')[0]}
-                      </span>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <p className="text-gray-700 text-lg leading-relaxed">
-                        {expandedReview === testimonial.id 
-                          ? testimonial.message 
-                          : testimonial.message.length > 100 ? testimonial.message.substring(0, 100) + '...' : testimonial.message}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold">
-                        {testimonial.name.charAt(0)}
-                      </div>
-                      <div className="ml-4">
-                        <h4 className="font-semibold text-gray-900">
-                          {testimonial.name}
-                        </h4>
-                        <p className="text-sm text-gray-600">{testimonial.origin || 'Pengunjung Terverifikasi'}</p>
-                      </div>
-                    </div>
-                  </div>
+              <ChevronLeft className="h-6 w-6 text-gray-600" />
+            </button>
+          </div>
+
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 z-10">
+            <button
+              onClick={handleNext}
+              className="p-2 rounded-full bg-white shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <ChevronRight className="h-6 w-6 text-gray-600" />
+            </button>
+          </div>
+
+          {/* Testimonial Card */}
+          <div className="bg-white rounded-xl shadow-xl p-8 max-w-3xl mx-auto">
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-6">
+                {/* Star Rating */}
+                <div className="flex justify-center mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-5 w-5 ${
+                        i < (testimonials[currentIndex]?.rating || 0)
+                          ? 'text-yellow-400 fill-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
                 </div>
-              ))}
+                
+                {/* Testimonial Text */}
+                <p className="text-gray-700 text-lg italic">
+                  "{testimonials[currentIndex]?.message}"
+                </p>
+              </div>
+              
+              {/* Author Info */}
+              <div>
+                <h3 className="font-bold text-gray-900">
+                  {testimonials[currentIndex]?.name}
+                </h3>
+                {testimonials[currentIndex]?.origin && (
+                  <p className="text-gray-500 text-sm">
+                    {testimonials[currentIndex].origin}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Navigation Buttons */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:bg-gray-50 transition-colors"
-          >
-            <ChevronLeft size={24} className="text-gray-600" />
-          </button>
-          
-          <button
-            onClick={nextSlide}
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:bg-gray-50 transition-colors"
-          >
-            <ChevronRight size={24} className="text-gray-600" />
-          </button>
-
-          {/* Dots Indicator */}
-          <div className="flex justify-center mt-8 space-x-2">
+          {/* Carousel Indicators */}
+          <div className="flex justify-center mt-6 space-x-2">
             {testimonials.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex ? 'bg-orange-600' : 'bg-gray-300'
+                className={`h-2 rounded-full transition-all ${
+                  currentIndex === index ? 'w-6 bg-orange-600' : 'w-2 bg-gray-300'
                 }`}
               />
             ))}

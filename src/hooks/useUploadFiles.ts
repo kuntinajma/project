@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { http } from "../lib/http";
 
 interface UploadFileResponse {
   url: string;
@@ -18,7 +19,7 @@ export function useUploadFiles() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const uploadFiles = async (files: FileList | null) => {
+  const uploadFiles = async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return [];
 
     setUploading(true);
@@ -39,8 +40,6 @@ export function useUploadFiles() {
           body: formData,
         }
       );
-
-      console.log(response.body);
 
       if (!response.ok) {
         throw new Error("Upload failed");

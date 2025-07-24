@@ -118,3 +118,63 @@ CREATE TABLE articles (
   published_at TIMESTAMP NULL,
   FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Settings table for website configuration
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category VARCHAR(50) NOT NULL, -- 'general', 'contact', 'media', 'social', etc.
+  key VARCHAR(100) NOT NULL,
+  value TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(category, key)
+);
+
+-- Facilities table for island amenities
+CREATE TABLE IF NOT EXISTS facilities (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  icon VARCHAR(10) NOT NULL,
+  label VARCHAR(100) NOT NULL,
+  description VARCHAR(255),
+  is_available BOOLEAN DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default settings
+INSERT OR IGNORE INTO settings (category, key, value) VALUES
+  -- General settings
+  ('general', 'island_name', 'Pulau Laiya'),
+  ('general', 'village_name', 'Desa Mattiro Labangeng'),
+  ('general', 'description', 'Pulau Laiya adalah destinasi wisata eksotis dengan budaya lokal yang kaya di Desa Mattiro Labangeng, Sulawesi Selatan.'),
+  ('general', 'welcome_message', 'Selamat datang di Pulau Laiya, permata tersembunyi Sulawesi Selatan dengan keindahan alam dan budaya yang memukau.'),
+  
+  -- Contact settings
+  ('contact', 'address', 'Pulau Laiya, Desa Mattiro Labangeng, Kecamatan Liukang Tupabbiring, Kabupaten Pangkep, Sulawesi Selatan'),
+  ('contact', 'phone', '+62 812-3456-7890'),
+  ('contact', 'whatsapp', '+62 812-3456-7890'),
+  ('contact', 'email', 'info@pulaulaiya.com'),
+  ('contact', 'maps_embed_url', 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d...'),
+  ('contact', 'latitude', '-5.1234'),
+  ('contact', 'longitude', '119.5678'),
+  
+  -- Media settings
+  ('media', 'hero_video_url', 'https://www.youtube.com/watch?v=Gh0K71uxucM'),
+  ('media', 'main_logo', ''),
+  ('media', 'hero_background', ''),
+  ('media', 'gallery', '[]'), -- JSON array of image URLs
+  
+  -- Social media settings
+  ('social', 'tiktok', 'https://tiktok.com/@pulaulaiya'),
+  ('social', 'instagram', 'https://instagram.com/pulaulaiya'),
+  ('social', 'youtube', 'https://youtube.com/@pulaulaiya'),
+  ('social', 'twitter', 'https://twitter.com/pulaulaiya');
+
+-- Insert default facilities
+INSERT OR IGNORE INTO facilities (icon, label, description, is_available) VALUES
+  ('🚿', 'Kamar Mandi', 'Fasilitas kamar mandi yang bersih', 1),
+  ('📶', 'Wi-Fi', 'Akses internet nirkabel gratis', 1),
+  ('⚡', 'Listrik', 'Pasokan listrik 24 jam', 1),
+  ('🏪', 'Toko', 'Toko dan pasar lokal', 1),
+  ('🏥', 'Medis', 'Fasilitas medis dasar', 0),
+  ('🍽️', 'Restoran', 'Masakan lokal dan internasional', 1);
