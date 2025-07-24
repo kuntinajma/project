@@ -214,6 +214,8 @@ const HomePage: React.FC = () => {
                 <img
                   src={
                     pkg.image_url ||
+                    pkg.image ||
+                    pkg.featured_image ||
                     "https://images.pexels.com/photos/1430676/pexels-photo-1430676.jpeg"
                   }
                   alt={pkg.name}

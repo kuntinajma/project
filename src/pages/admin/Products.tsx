@@ -1,13 +1,15 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect } from "react";
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   MagnifyingGlassIcon,
+  EyeIcon,
   CubeIcon,
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
 import Toast from "../../components/common/Toast";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../hooks/useToast";
@@ -33,6 +35,7 @@ const Products: React.FC = () => {
     price: 0,
     image: "",
     description: "",
+    category: "",
     material: "",
     durability: "",
     deliveryTime: "",
@@ -46,7 +49,8 @@ const Products: React.FC = () => {
     page: 1,
     limit: 12,
     search: "",
-    // Don't filter by user MSMEs initially - show all products for admin
+    // Filter products based on user role
+    user_id: user?.role === "msme" ? user?.id?.toString() : undefined,
   });
 
   // Hooks for API operations
@@ -66,7 +70,10 @@ const Products: React.FC = () => {
   // Get MSMEs for the dropdown
   const { msmes } = useMSMEs({
     limit: 100,
-    user_id: user?.role === "super_admin" ? undefined : user?.id?.toString(),
+    user_id:
+      user?.role === "superadmin" || user?.role === "admin"
+        ? undefined
+        : user?.id?.toString(),
   });
 
   // Use previous data while loading
@@ -91,7 +98,7 @@ const Products: React.FC = () => {
     return () => clearTimeout(handler);
   }, [searchTerm, query.search]);
 
-  // Use previous data while loading to prevent UI flicker
+  // Use previous data while loading
   const displayProducts = productsLoading ? prevProducts : products;
 
   const handleAddProduct = () => {
@@ -110,6 +117,7 @@ const Products: React.FC = () => {
       price: 0,
       image: "",
       description: "",
+      category: "",
       material: "",
       durability: "",
       deliveryTime: "",
@@ -127,6 +135,7 @@ const Products: React.FC = () => {
       price: product.price,
       image: product.image || "",
       description: product.description,
+      category: product.category || "",
       material: product.material,
       durability: product.durability,
       deliveryTime: product.deliveryTime,
@@ -159,7 +168,7 @@ const Products: React.FC = () => {
           "success",
           `Product ${productToDelete.name} berhasil dihapus`
         );
-        // Refresh products list by creating a new query object to trigger the hook
+        // Refresh products list
         setQuery((prev) => ({ ...prev }));
       } else {
         showToast("error", result.message || "Gagal menghapus product");
@@ -177,6 +186,7 @@ const Products: React.FC = () => {
     e.preventDefault();
     if (!token) return;
 
+    // Validate required fields
     if (!formData.msme_id) {
       showToast("error", "Pilih MSME terlebih dahulu");
       return;
@@ -185,11 +195,11 @@ const Products: React.FC = () => {
     try {
       let image = formData.image;
 
+      // Upload image if file is selected
       if (imageFile) {
-        // Since useUploadFiles expects a FileList, we create one
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(imageFile);
-        const fileList = dataTransfer.files;
+        const fileList = new FileList();
+        Object.defineProperty(fileList, "0", { value: imageFile });
+        Object.defineProperty(fileList, "length", { value: 1 });
 
         const uploadedUrls = await uploadFiles(fileList);
         if (uploadedUrls.length > 0) {
@@ -197,7 +207,10 @@ const Products: React.FC = () => {
         }
       }
 
-      const productData = { ...formData, image };
+      const productData = {
+        ...formData,
+        image,
+      };
 
       let result;
       if (selectedProduct) {
@@ -213,6 +226,20 @@ const Products: React.FC = () => {
         const action = selectedProduct ? "diperbarui" : "dibuat";
         showToast("success", `Product berhasil ${action}`);
         setIsModalOpen(false);
+        setSelectedProduct(null);
+        setFormData({
+          name: "",
+          price: 0,
+          image: "",
+          description: "",
+          category: "",
+          material: "",
+          durability: "",
+          deliveryTime: "",
+          msme_id: "",
+          relatedProducts: [],
+        });
+        setImageFile(null);
         // Refresh products list
         setQuery((prev) => ({ ...prev }));
       } else {
@@ -284,7 +311,7 @@ const Products: React.FC = () => {
       {/* Error State */}
       {productsError && (
         <div className="p-4 mb-6 bg-red-50 rounded-lg border border-red-200">
-          <p className="text-red-600">Error: {productsError?.message}</p>
+          <p className="text-red-600">Error: {productsError.message}</p>
         </div>
       )}
 
@@ -471,6 +498,28 @@ const Products: React.FC = () => {
                         }
                         className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
+                        Category *
+                      </label>
+                      <select
+                        required
+                        value={formData.category}
+                        onChange={(e) =>
+                          handleFormChange("category", e.target.value)
+                        }
+                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      >
+                        <option value="">Select Category</option>
+                        <option value="kerajinan">Kerajinan</option>
+                        <option value="kuliner">Kuliner</option>
+                        <option value="fashion">Fashion</option>
+                        <option value="souvenir">Souvenir</option>
+                        <option value="tekstil">Tekstil</option>
+                        <option value="lainnya">Lainnya</option>
+                      </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

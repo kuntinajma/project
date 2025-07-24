@@ -19,6 +19,7 @@ export type MSMEProductQuery = {
   page?: number;
   limit?: number;
   search?: string;
+  user_id?: string;
 };
 
 const defaultQuery: MSMEProductQuery = {

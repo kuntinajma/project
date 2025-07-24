@@ -24,6 +24,7 @@ async function formatProduct(row) {
     price: Number(row.price),
     image: row.image ?? null,
     description: row.description,
+    category: row.category ?? null,
     material: row.material,
     durability: row.durability,
     deliveryTime: row.delivery_time,
@@ -45,6 +46,7 @@ const getAllProducts = async (req, res) => {
       msme_id,
       min_price,
       max_price,
+      user_id,
     } = req.query;
     const offset = (page - 1) * limit;
 
@@ -54,6 +56,12 @@ const getAllProducts = async (req, res) => {
     if (msme_id) {
       whereClause += " AND msme_id = ?";
       params.push(msme_id);
+    }
+
+    // Filter by user_id - get products from MSMEs owned by specific user
+    if (user_id) {
+      whereClause += " AND msme_id IN (SELECT id FROM msmes WHERE user_id = ?)";
+      params.push(user_id);
     }
 
     if (search) {
@@ -153,6 +161,7 @@ const createProduct = async (req, res) => {
       price,
       image = null,
       description,
+      category,
       material,
       durability,
       deliveryTime,
@@ -182,17 +191,19 @@ const createProduct = async (req, res) => {
         price,
         image,
         description,
+        category,
         material,
         durability,
         delivery_time,
         msme_id,
         related_products
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         price,
         image,
         description,
+        category,
         material,
         durability,
         deliveryTime,
@@ -233,6 +244,7 @@ const updateProduct = async (req, res) => {
       price,
       image = null,
       description,
+      category,
       material,
       durability,
       deliveryTime,
@@ -270,13 +282,14 @@ const updateProduct = async (req, res) => {
 
     await pool.execute(
       `UPDATE products
-       SET name = ?, price = ?, image = ?, description = ?, material = ?, durability = ?, delivery_time = ?, msme_id = ?, related_products = ?
+       SET name = ?, price = ?, image = ?, description = ?, category = ?, material = ?, durability = ?, delivery_time = ?, msme_id = ?, related_products = ?
        WHERE id = ?`,
       [
         name,
         price,
         image,
         description,
+        category,
         material,
         durability,
         deliveryTime,

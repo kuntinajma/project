@@ -618,7 +618,17 @@ const Articles: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, status: "draft" }));
+                          setTimeout(() => {
+                            const form = document.querySelector("form");
+                            if (form) {
+                              form.requestSubmit();
+                            }
+                          }, 0);
+                        }}
+                        disabled={crudLoading || uploadLoading}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50"
                       >
                         Save as Draft
                       </button>

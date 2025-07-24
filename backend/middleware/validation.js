@@ -3,6 +3,7 @@ const USER_ROLE = require("../constants/roles");
 const DESTINATION_CATEGORIES = require("../constants/destinationCategories");
 const ARTICLE_CATEGORIES = require("../constants/articleCategories");
 const CULTURE_CATEGORIES = require("../constants/cultureCategories");
+const PRODUCT_CATEGORIES = require("../constants/productCategories");
 
 // Handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -21,6 +22,7 @@ const roles = Object.values(USER_ROLE);
 const destinationCategories = Object.values(DESTINATION_CATEGORIES);
 const articleCategories = Object.values(ARTICLE_CATEGORIES);
 const cultureCategories = Object.values(CULTURE_CATEGORIES);
+const productCategories = Object.values(PRODUCT_CATEGORIES);
 
 // User validation rules
 const validateUser = [
@@ -221,6 +223,7 @@ const validateProduct = [
     .trim()
     .isLength({ min: 10, max: 1000 })
     .withMessage("Deskripsi harus 10-1000 karakter"),
+  body("category").isIn(productCategories).withMessage("Kategori tidak valid"),
   body("material")
     .trim()
     .isLength({ min: 3, max: 255 })

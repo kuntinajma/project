@@ -1,18 +1,25 @@
--- DROP TABLE dalam urutan yang aman (anak ke parent)
+-- =================================================================
+-- CORRECT DROP ORDER TO AVOID FOREIGN KEY ERRORS
+-- =================================================================
+
+-- 1. Drop tables that depend on other tables first (children)
 DROP TABLE IF EXISTS articles;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS msmes;
-DROP TABLE IF EXISTS cultures;
-DROP TABLE IF EXISTS tour_packages;
-DROP TABLE IF EXISTS destinations;
+
+-- 2. Now it's safe to drop the parent table
 DROP TABLE IF EXISTS users;
 
--- Aktifkan kembali pemeriksaan foreign key
-SET FOREIGN_KEY_CHECKS = 1;
+-- 3. Drop the rest of the tables (order doesn't matter for these)
+DROP TABLE IF EXISTS destinations;
+DROP TABLE IF EXISTS tour_packages;
+DROP TABLE IF EXISTS cultures;
 
--- USERS TABLE
--- Aktifkan kembali pemeriksaan foreign key
-SET FOREIGN_KEY_CHECKS = 1;
+
+-- =================================================================
+-- CREATE TABLES
+-- (The existing CREATE order is already correct: parents before children)
+-- =================================================================
 
 -- USERS TABLE
 CREATE TABLE users (
@@ -24,6 +31,59 @@ CREATE TABLE users (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- MSMES
+CREATE TABLE msmes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  brand VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  phone VARCHAR(20) NULL,
+  instagram VARCHAR(255) NULL,
+  shopee VARCHAR(255) NULL,
+  whatsapp VARCHAR(20) NULL,
+  user_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- It's good practice to add this constraint
+);
+
+-- PRODUCTS
+CREATE TABLE products (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(15, 2) NOT NULL,
+  image VARCHAR(255) NULL,
+  description TEXT NOT NULL,
+  category VARCHAR(255) NULL,
+  material VARCHAR(255) NOT NULL,
+  durability VARCHAR(255) NOT NULL,
+  delivery_time VARCHAR(255) NOT NULL,
+  msme_id INT NOT NULL,
+  related_products TEXT NULL, -- JSON array of product IDs
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (msme_id) REFERENCES msmes(id) ON DELETE CASCADE -- It's good practice to add this constraint
+);
+
+-- ARTICLES
+CREATE TABLE articles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  author_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) UNIQUE NOT NULL,
+  content LONGTEXT NOT NULL,
+  excerpt TEXT NULL,
+  category VARCHAR(255) NOT NULL,
+  featured_image VARCHAR(255) NULL,
+  status ENUM('draft', 'pending', 'published', 'rejected') DEFAULT 'draft',
+  is_featured BOOLEAN DEFAULT FALSE,
+  view_count INT DEFAULT 0,
+  tags TEXT NULL, -- JSON array
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  published_at TIMESTAMP NULL,
+  FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- DESTINATIONS
@@ -52,7 +112,6 @@ CREATE TABLE tour_packages (
   max_persons INT,
   whatsapp_contact VARCHAR(20) NULL,
   whatsapp_booking_url VARCHAR(500) NULL,
-  whatsapp_booking_url VARCHAR(500) NULL,
   facilities TEXT NULL, -- JSON array
   image VARCHAR(255) NULL,
   popular BOOLEAN DEFAULT FALSE,
@@ -68,58 +127,6 @@ CREATE TABLE cultures (
   image VARCHAR(255) NULL,
   category VARCHAR(255),
   gallery TEXT NULL, -- JSON array
-  gallery TEXT NULL, -- JSON array
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- MSMES
-CREATE TABLE msmes (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  brand VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
-  phone VARCHAR(20) NULL,
-  instagram VARCHAR(255) NULL,
-  shopee VARCHAR(255) NULL,
-  whatsapp VARCHAR(20) NULL,
-  user_id INT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- PRODUCTS
-CREATE TABLE products (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  price DECIMAL(15, 2) NOT NULL,
-  image VARCHAR(255) NULL,
-  description TEXT NOT NULL,
-  material VARCHAR(255) NOT NULL,
-  durability VARCHAR(255) NOT NULL,
-  delivery_time VARCHAR(255) NOT NULL,
-  msme_id INT NOT NULL,
-  related_products TEXT NULL, -- JSON array
-  related_products TEXT NULL, -- JSON array
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- ARTICLES
-CREATE TABLE articles (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  author_id INT NOT NULL,
-  title VARCHAR(255) NOT NULL,
-  slug VARCHAR(255) UNIQUE NOT NULL,
-  content LONGTEXT NOT NULL,
-  excerpt TEXT NULL,
-  category VARCHAR(255) NOT NULL,
-  featured_image VARCHAR(255) NULL,
-  status ENUM('draft', 'pending', 'published', 'rejected') DEFAULT 'draft',
-  is_featured BOOLEAN DEFAULT FALSE,
-  view_count INT DEFAULT 0,
-  tags TEXT NULL, -- JSON array
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  published_at TIMESTAMP NULL,
-  FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
 );
