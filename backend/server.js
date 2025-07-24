@@ -9,7 +9,7 @@ require("dotenv").config();
 const { testConnection } = require("./config/database");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3005;
 
 // Security middleware
 app.use(
@@ -23,7 +23,11 @@ app.use(
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3005",
+      process.env.FRONTEND_URL || "http://localhost:3000",
+    ],
     credentials: true,
   })
 );
@@ -72,10 +76,10 @@ testConnection();
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/destinations", require("./routes/destinations"));
 app.use("/api/packages", require("./routes/packages"));
-app.use("/api/umkm", require("./routes/umkm"));
 app.use("/api/msme", require("./routes/msme"));
 app.use("/api/products", require("./routes/products"));
 app.use("/api/culture", require("./routes/culture"));
+app.use("/api/articles", require("./routes/articles"));
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/contact", require("./routes/contact"));
 app.use("/api/dashboard", require("./routes/dashboard"));
