@@ -101,6 +101,11 @@ CREATE TABLE products (
 );
 
 -- ARTICLES
+<<<<<<< HEAD
+=======
+DROP TABLE IF EXISTS articles;
+
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
 CREATE TABLE articles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   author_id INT NOT NULL,
@@ -118,4 +123,8 @@ CREATE TABLE articles (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   published_at TIMESTAMP NULL,
   FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+<<<<<<< HEAD
 );
+=======
+);
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801

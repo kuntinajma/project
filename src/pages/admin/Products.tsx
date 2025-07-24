@@ -179,12 +179,15 @@ const Products: React.FC = () => {
     e.preventDefault();
     if (!token) return;
 
+<<<<<<< HEAD
     // Validate required fields
     if (!formData.msme_id) {
       showToast("error", "Pilih MSME terlebih dahulu");
       return;
     }
 
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
     try {
       let image = formData.image;
 
@@ -263,6 +266,7 @@ const Products: React.FC = () => {
         </div>
         <button
           onClick={handleAddProduct}
+<<<<<<< HEAD
           disabled={msmes.length === 0}
           className={`flex items-center px-4 py-2 space-x-2 rounded-lg transition-colors ${
             msmes.length === 0
@@ -270,6 +274,9 @@ const Products: React.FC = () => {
               : "text-white bg-orange-600 hover:bg-orange-700"
           }`}
           title={msmes.length === 0 ? "Buat MSME terlebih dahulu" : ""}
+=======
+          className="flex items-center px-4 py-2 space-x-2 text-white bg-orange-600 rounded-lg transition-colors hover:bg-orange-700"
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
         >
           <PlusIcon className="w-5 h-5" />
           <span>Add Product</span>

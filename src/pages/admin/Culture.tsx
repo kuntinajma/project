@@ -40,7 +40,10 @@ const Culture: React.FC = () => {
     category: "dance" as "dance" | "culinary" | "customs" | "wisdom",
     gallery: [] as string[],
     videos: [] as string[],
+<<<<<<< HEAD
     videoUrl: "", // ADD THIS FIELD
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<FileList | null>(null);
@@ -112,7 +115,10 @@ const Culture: React.FC = () => {
       category: "dance",
       gallery: [],
       videos: [],
+<<<<<<< HEAD
       videoUrl: "",
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
     });
     setImageFile(null);
     setGalleryFiles(null);
@@ -128,7 +134,10 @@ const Culture: React.FC = () => {
       category: culture.category,
       gallery: culture.gallery || [],
       videos: culture.videos || [],
+<<<<<<< HEAD
       videoUrl: culture.videoUrl || "",
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
     });
     setImageFile(null);
     setGalleryFiles(null);
@@ -225,7 +234,10 @@ const Culture: React.FC = () => {
           category: "dance",
           gallery: [],
           videos: [],
+<<<<<<< HEAD
           videoUrl: "",
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
         });
         setImageFile(null);
         setGalleryFiles(null);

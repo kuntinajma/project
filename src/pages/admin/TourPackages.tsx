@@ -48,7 +48,10 @@ const TourPackages: React.FC = () => {
     image: "",
     popular: false,
     whatsappContact: "",
+<<<<<<< HEAD
     whatsappBookingUrl: "", // ADD THIS FIELD
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [facilitiesText, setFacilitiesText] = useState("");
@@ -114,7 +117,10 @@ const TourPackages: React.FC = () => {
       image: "",
       popular: false,
       whatsappContact: "",
+<<<<<<< HEAD
       whatsappBookingUrl: "",
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
     });
     setFacilitiesText("");
     setImageFile(null);
@@ -134,7 +140,10 @@ const TourPackages: React.FC = () => {
       image: pkg.image,
       popular: pkg.popular || false,
       whatsappContact: pkg.whatsappContact,
+<<<<<<< HEAD
       whatsappBookingUrl: pkg.whatsappBookingUrl || "",
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
     });
     setFacilitiesText(pkg.facilities.join("\n"));
     setImageFile(null);
@@ -186,7 +195,15 @@ const TourPackages: React.FC = () => {
 
       // Upload image if file is selected
       if (imageFile) {
+<<<<<<< HEAD
         const uploadedUrls = await uploadFiles([imageFile]);
+=======
+        const fileList = new FileList();
+        Object.defineProperty(fileList, "0", { value: imageFile });
+        Object.defineProperty(fileList, "length", { value: 1 });
+
+        const uploadedUrls = await uploadFiles(fileList);
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
         if (uploadedUrls.length > 0) {
           image = uploadedUrls[0];
         }
@@ -230,7 +247,10 @@ const TourPackages: React.FC = () => {
           image: "",
           popular: false,
           whatsappContact: "",
+<<<<<<< HEAD
           whatsappBookingUrl: "",
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
         });
         setFacilitiesText("");
         setImageFile(null);
@@ -538,10 +558,13 @@ const TourPackages: React.FC = () => {
                       <input
                         type="url"
                         placeholder="https://wa.me/6281234567890?text=Hi, I want to book..."
+<<<<<<< HEAD
                         value={formData.whatsappBookingUrl}
                         onChange={(e) =>
                           handleFormChange("whatsappBookingUrl", e.target.value)
                         }
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
                         className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                       <p className="mt-1 text-xs text-gray-500">
@@ -574,9 +597,12 @@ const TourPackages: React.FC = () => {
                           <input
                             type="file"
                             accept="image/*"
+<<<<<<< HEAD
                             onChange={(e) =>
                               setImageFile(e.target.files?.[0] || null)
                             }
+=======
+>>>>>>> c72853d76138d0ed848dee52f24269cfc1dea801
                             className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                           />
                           <p className="mt-1 text-xs text-gray-500">
