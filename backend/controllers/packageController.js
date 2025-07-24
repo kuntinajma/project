@@ -10,6 +10,7 @@ function formatTourPackage(row) {
     minPersons: row.min_persons,
     maxPersons: row.max_persons ?? null,
     whatsappContact: row.whatsapp_contact,
+    whatsappBookingUrl: row.whatsapp_booking_url ?? null,
     image: row.image ?? null,
     facilities: row.facilities ? JSON.parse(row.facilities) : [],
     popular: !!row.popular,
@@ -111,6 +112,7 @@ const createPackage = async (req, res) => {
       minPersons,
       maxPersons,
       whatsappContact,
+      whatsappBookingUrl = null, // ADD THIS FIELD
       facilities,
       image = null,
       popular = false,
@@ -118,8 +120,8 @@ const createPackage = async (req, res) => {
 
     const [result] = await pool.execute(
       `INSERT INTO tour_packages 
-        (name, description, price, duration, min_persons, max_persons, whatsapp_contact, facilities, image, popular)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (name, description, price, duration, min_persons, max_persons, whatsapp_contact, whatsapp_booking_url, facilities, image, popular)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         description,
@@ -128,6 +130,7 @@ const createPackage = async (req, res) => {
         minPersons,
         maxPersons ?? null,
         whatsappContact,
+        whatsappBookingUrl,
         JSON.stringify(facilities),
         image,
         popular,
@@ -165,6 +168,7 @@ const updatePackage = async (req, res) => {
       minPersons,
       maxPersons,
       whatsappContact,
+      whatsappBookingUrl = null, // ADD THIS FIELD
       facilities,
       image = null,
       popular = false,
@@ -172,7 +176,7 @@ const updatePackage = async (req, res) => {
 
     await pool.execute(
       `UPDATE tour_packages 
-       SET name = ?, description = ?, price = ?, duration = ?, min_persons = ?, max_persons = ?, whatsapp_contact = ?, facilities = ?, image = ?, popular = ?
+       SET name = ?, description = ?, price = ?, duration = ?, min_persons = ?, max_persons = ?, whatsapp_contact = ?, whatsapp_booking_url = ?, facilities = ?, image = ?, popular = ?
        WHERE id = ?`,
       [
         name,
@@ -182,6 +186,7 @@ const updatePackage = async (req, res) => {
         minPersons,
         maxPersons ?? null,
         whatsappContact,
+        whatsappBookingUrl,
         JSON.stringify(facilities),
         image,
         popular,

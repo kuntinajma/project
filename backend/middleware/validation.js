@@ -33,7 +33,10 @@ const validateUser = [
     .isLength({ min: 6 })
     .withMessage("Password minimal 6 karakter"),
   body("role").optional().isIn(roles).withMessage("Role tidak valid"),
-  body("is_active").optional().toBoolean(),
+  body("is_active")
+    .optional()
+    .isBoolean()
+    .withMessage("Status aktif tidak valid"),
   handleValidationErrors,
 ];
 
@@ -44,7 +47,10 @@ const validateUserUpdate = [
     .isLength({ min: 2, max: 255 })
     .withMessage("Nama harus 2-255 karakter"),
   body("role").optional().isIn(roles).withMessage("Role tidak valid"),
-  body("is_active").optional().toBoolean(),
+  body("is_active")
+    .optional()
+    .isBoolean()
+    .withMessage("Status aktif tidak valid"),
   handleValidationErrors,
 ];
 
@@ -136,6 +142,10 @@ const validateTourPackage = [
   body("whatsappContact")
     .isMobilePhone("id-ID")
     .withMessage("Nomor WhatsApp tidak valid"),
+  body("whatsappBookingUrl")
+    .optional()
+    .isURL()
+    .withMessage("URL WhatsApp booking tidak valid"),
   body("facilities")
     .isArray({ min: 1 })
     .withMessage("Minimal 1 fasilitas diperlukan"),
@@ -155,7 +165,7 @@ const validateCulture = [
     .isLength({ min: 10 })
     .withMessage("Deskripsi minimal 10 karakter"),
   body("category").isIn(cultureCategories).withMessage("Kategori tidak valid"),
-  body("image").optional().withMessage("URL gambar tidak valid"),
+  body("image").optional().isString().withMessage("URL gambar tidak valid"),
   body("gallery")
     .optional()
     .custom((gallery) => {
@@ -173,7 +183,7 @@ const validateCulture = [
   handleValidationErrors,
 ];
 
-//MSME
+// MSME
 const validateMSME = [
   body("brand")
     .trim()
@@ -188,12 +198,13 @@ const validateMSME = [
     .optional()
     .isMobilePhone("id-ID")
     .withMessage("Nomor telepon tidak valid"),
-  body("instagram").optional().isURL().withMessage("URL gambar tidak valid"),
-  body("shopee").optional().isURL().withMessage("URL gambar tidak valid"),
+  body("instagram").optional().isURL().withMessage("URL Instagram tidak valid"),
+  body("shopee").optional().isURL().withMessage("URL Shopee tidak valid"),
   body("whatsapp")
     .optional()
     .isMobilePhone("id-ID")
     .withMessage("Nomor WhatsApp tidak valid"),
+  handleValidationErrors,
 ];
 
 // Product validation
@@ -205,7 +216,7 @@ const validateProduct = [
   body("price")
     .isFloat({ min: 0 })
     .withMessage("Harga harus berupa angka positif"),
-  body("image").optional().withMessage("URL gambar tidak valid"),
+  body("image").optional().isString().withMessage("URL gambar tidak valid"),
   body("description")
     .trim()
     .isLength({ min: 10, max: 1000 })
@@ -233,6 +244,7 @@ const validateProduct = [
     .optional()
     .isInt({ min: 1 })
     .withMessage("Related product ID harus berupa angka positif"),
+  handleValidationErrors,
 ];
 
 // Article validation

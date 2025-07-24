@@ -1,192 +1,375 @@
-import React, { useState } from 'react';
-import { 
-  PlusIcon, 
-  PencilIcon, 
-  TrashIcon, 
+import React, { useState, useEffect } from "react";
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
   MagnifyingGlassIcon,
   EyeIcon,
-  CubeIcon
-} from '@heroicons/react/24/outline';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-import Toast from '../../components/common/Toast';
-import ConfirmDialog from '../../components/common/ConfirmDialog';
-import { useToast } from '../../hooks/useToast';
+  CubeIcon,
+  PhotoIcon,
+} from "@heroicons/react/24/outline";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import Toast from "../../components/common/Toast";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
+import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../context/AuthContext";
+import useMSMEProducts, { MSMEProductQuery } from "../../hooks/useMSMEProducts";
+import useProductsCRUD, { Product } from "../../hooks/useProductsCRUD";
+import useMSMEs from "../../hooks/useMSMEs";
+import { useUploadFiles } from "../../hooks/useUploadFiles";
 
 const Products: React.FC = () => {
+  const { user, token } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [productToDelete, setProductToDelete] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [prevProducts, setPrevProducts] = useState<Product[]>([]);
   const { toast, showToast, hideToast } = useToast();
 
-  const products = [
-    { 
-      id: 1, 
-      name: 'Coconut Shell Handicraft', 
-      price: 125000, 
-      stock: 15,
-      material: 'Coconut shell, natural fiber',
-      durability: '5+ years with proper care',
-      deliveryTime: '3-5 working days',
-      image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-      description: 'Beautiful handicraft made from coconut shells using traditional techniques'
-    },
-    { 
-      id: 2, 
-      name: 'Traditional Woven Bag', 
-      price: 85000, 
-      stock: 8,
-      material: 'Pandan leaves, cotton thread',
-      durability: '3+ years with proper care',
-      deliveryTime: '2-4 working days',
-      image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-      description: 'Beautiful bag made from high-quality pandan weaving'
-    },
-    { 
-      id: 3, 
-      name: 'Seashell Jewelry Set', 
-      price: 65000, 
-      stock: 0,
-      material: 'Natural seashells, silver wire',
-      durability: '2+ years with proper care',
-      deliveryTime: '1-3 working days',
-      image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300',
-      description: 'Elegant jewelry set made from local seashells'
-    },
-  ];
+  // Form data state
+  const [formData, setFormData] = useState({
+    name: "",
+    price: 0,
+    image: "",
+    description: "",
+    material: "",
+    durability: "",
+    deliveryTime: "",
+    msme_id: "",
+    relatedProducts: [] as string[],
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // API state and queries
+  const [query, setQuery] = useState<MSMEProductQuery>({
+    page: 1,
+    limit: 12,
+    search: "",
+    // Don't filter by user MSMEs initially - show all products for admin
+  });
+
+  // Hooks for API operations
+  const {
+    msmeProducts: products,
+    loading: productsLoading,
+    error: productsError,
+  } = useMSMEProducts(query);
+  const {
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    loading: crudLoading,
+  } = useProductsCRUD();
+  const { uploadFiles, uploading: uploadLoading } = useUploadFiles();
+
+  // Get MSMEs for the dropdown
+  const { msmes } = useMSMEs({
+    limit: 100,
+    user_id: user?.role === "super_admin" ? undefined : user?.id?.toString(),
+  });
+
+  // Use previous data while loading
+  useEffect(() => {
+    if (products.length > 0) {
+      setPrevProducts(products);
+    }
+  }, [products]);
+
+  // Handle search with debounce
+  useEffect(() => {
+    if (searchTerm === query.search) return;
+
+    const handler = setTimeout(() => {
+      setQuery((prev) => ({
+        ...prev,
+        search: searchTerm,
+        page: 1,
+      }));
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm, query.search]);
+
+  // Use previous data while loading
+  const displayProducts = productsLoading ? prevProducts : products;
 
   const handleAddProduct = () => {
+    // Check if user has any MSMEs before allowing product creation
+    if (msmes.length === 0) {
+      showToast(
+        "error",
+        "Anda harus membuat MSME terlebih dahulu sebelum menambahkan produk"
+      );
+      return;
+    }
+
     setSelectedProduct(null);
+    setFormData({
+      name: "",
+      price: 0,
+      image: "",
+      description: "",
+      material: "",
+      durability: "",
+      deliveryTime: "",
+      msme_id: "",
+      relatedProducts: [],
+    });
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
-  const handleEditProduct = (product: any) => {
+  const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
+    setFormData({
+      name: product.name,
+      price: product.price,
+      image: product.image || "",
+      description: product.description,
+      material: product.material,
+      durability: product.durability,
+      deliveryTime: product.deliveryTime,
+      msme_id: product.msme_id,
+      relatedProducts: product.relatedProducts || [],
+    });
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
-  const handleDeleteProduct = (product: any) => {
+  const handleDeleteProduct = (product: Product) => {
     setProductToDelete(product);
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDeleteProduct = () => {
-    setTimeout(() => {
-      showToast('success', `Produk ${productToDelete.name} berhasil dihapus`);
+  const handleFormChange = (field: string, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete || !token) return;
+
+    try {
+      const result = await deleteProduct(productToDelete.id, token);
+      if (result.success) {
+        showToast(
+          "success",
+          `Product ${productToDelete.name} berhasil dihapus`
+        );
+        // Refresh products list
+        setQuery((prev) => ({ ...prev }));
+      } else {
+        showToast("error", result.message || "Gagal menghapus product");
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      showToast("error", "Terjadi kesalahan saat menghapus product");
+    } finally {
+      setIsDeleteDialogOpen(false);
       setProductToDelete(null);
-    }, 500);
+    }
   };
 
-  const handleSubmitProduct = (e: React.FormEvent) => {
+  const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTimeout(() => {
-      const action = selectedProduct ? 'diperbarui' : 'dibuat';
-      showToast('success', `Produk berhasil ${action}`);
-      setIsModalOpen(false);
-      setSelectedProduct(null);
-    }, 500);
+    if (!token) return;
+
+    // Validate required fields
+    if (!formData.msme_id) {
+      showToast("error", "Pilih MSME terlebih dahulu");
+      return;
+    }
+
+    try {
+      let image = formData.image;
+
+      // Upload image if file is selected
+      if (imageFile) {
+        const fileList = new FileList();
+        Object.defineProperty(fileList, "0", { value: imageFile });
+        Object.defineProperty(fileList, "length", { value: 1 });
+
+        const uploadedUrls = await uploadFiles(fileList);
+        if (uploadedUrls.length > 0) {
+          image = uploadedUrls[0];
+        }
+      }
+
+      const productData = {
+        ...formData,
+        image,
+      };
+
+      let result;
+      if (selectedProduct) {
+        result = await updateProduct(
+          { ...productData, id: selectedProduct.id },
+          token
+        );
+      } else {
+        result = await createProduct(productData, token);
+      }
+
+      if (result.success) {
+        const action = selectedProduct ? "diperbarui" : "dibuat";
+        showToast("success", `Product berhasil ${action}`);
+        setIsModalOpen(false);
+        setSelectedProduct(null);
+        setFormData({
+          name: "",
+          price: 0,
+          image: "",
+          description: "",
+          material: "",
+          durability: "",
+          deliveryTime: "",
+          msme_id: "",
+          relatedProducts: [],
+        });
+        setImageFile(null);
+        // Refresh products list
+        setQuery((prev) => ({ ...prev }));
+      } else {
+        showToast("error", result.message || "Gagal menyimpan product");
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      showToast("error", "Terjadi kesalahan saat menyimpan product");
+    }
   };
 
-  const handleUpdateStock = (product: any, newStock: number) => {
-    showToast('success', `Stok produk ${product.name} berhasil diperbarui menjadi ${newStock}`);
-  };
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(price);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Products</h1>
-          <p className="text-gray-600">Manage your UMKM products and inventory</p>
+          <p className="text-gray-600">
+            Manage your UMKM products and inventory
+          </p>
         </div>
         <button
           onClick={handleAddProduct}
-          className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+          disabled={msmes.length === 0}
+          className={`flex items-center px-4 py-2 space-x-2 rounded-lg transition-colors ${
+            msmes.length === 0
+              ? "text-gray-400 bg-gray-300 cursor-not-allowed"
+              : "text-white bg-orange-600 hover:bg-orange-700"
+          }`}
+          title={msmes.length === 0 ? "Buat MSME terlebih dahulu" : ""}
         >
-          <PlusIcon className="h-5 w-5" />
+          <PlusIcon className="w-5 h-5" />
           <span>Add Product</span>
         </button>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="p-6 bg-white rounded-lg shadow-md">
         <div className="flex-1 max-w-md">
           <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute top-3 left-3 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="py-2 pr-4 pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
         </div>
       </div>
 
+      {/* Loading State */}
+      {productsLoading && prevProducts.length === 0 && (
+        <div className="py-8 text-center">
+          <div className="inline-block w-8 h-8 rounded-full border-b-2 border-orange-600 animate-spin"></div>
+          <p className="mt-2 text-gray-600">Loading products...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {productsError && (
+        <div className="p-4 mb-6 bg-red-50 rounded-lg border border-red-200">
+          <p className="text-red-600">Error: {productsError.message}</p>
+        </div>
+      )}
+
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProducts.map((product) => (
-          <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {displayProducts.map((product: Product) => (
+          <div
+            key={product.id}
+            className="overflow-hidden bg-white rounded-lg shadow-md"
+          >
             <img
-              src={product.image}
+              src={
+                product.image ||
+                "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=300"
+              }
               alt={product.name}
-              className="w-full h-48 object-cover"
+              className="object-cover w-full h-48"
             />
             <div className="p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-              <p className="text-gray-600 text-sm mb-3">{product.description}</p>
-              
-              <div className="space-y-2 mb-4">
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                {product.name}
+              </h3>
+              <p className="mb-3 text-sm text-gray-600">
+                {product.description}
+              </p>
+
+              <div className="mb-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Price:</span>
-                  <span className="font-semibold text-orange-600">{formatPrice(product.price)}</span>
+                  <span className="font-semibold text-orange-600">
+                    {formatPrice(product.price)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Stock:</span>
-                  <span className={`font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {product.stock > 0 ? `${product.stock} items` : 'Out of stock'}
+                  <span className="text-gray-600">MSME:</span>
+                  <span className="font-medium text-gray-900">
+                    {product.sellerInfo?.brand || "Unknown"}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Material:</span>
-                  <span className="font-medium text-gray-900">{product.material}</span>
+                  <span className="font-medium text-gray-900">
+                    {product.material}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Delivery:</span>
-                  <span className="font-medium text-gray-900">{product.deliveryTime}</span>
+                  <span className="font-medium text-gray-900">
+                    {product.deliveryTime}
+                  </span>
                 </div>
               </div>
-              
+
               <div className="flex space-x-2">
-                <button className="flex items-center justify-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors">
-                  <EyeIcon className="h-4 w-4 inline mr-1" />
-                  <span className="text-sm font-medium">View</span>
-                </button>
-                <button 
+                <button
                   onClick={() => handleEditProduct(product)}
-                  className="flex items-center justify-center px-3 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
+                  className="flex justify-center items-center px-3 py-1 text-orange-600 rounded border border-orange-600 hover:bg-orange-50"
                 >
-                  <PencilIcon className="h-4 w-4 inline mr-1" />
+                  <PencilIcon className="inline mr-1 w-4 h-4" />
                   <span className="text-sm font-medium">Edit</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleDeleteProduct(product)}
-                  className="flex items-center justify-center px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                  className="flex justify-center items-center px-3 py-1 text-red-600 rounded border border-red-600 hover:bg-red-50"
                 >
-                  <TrashIcon className="h-4 w-4 inline mr-1" />
+                  <TrashIcon className="inline mr-1 w-4 h-4" />
                   <span className="text-sm font-medium">Delete</span>
                 </button>
               </div>
@@ -195,9 +378,37 @@ const Products: React.FC = () => {
         ))}
       </div>
 
-      {/* Add/Edit Product Modal */}
+      {/* Empty State */}
+      {!productsLoading && displayProducts.length === 0 && (
+        <div className="py-12 text-center">
+          <CubeIcon className="mx-auto mb-4 w-16 h-16 text-gray-400" />
+          <h3 className="mb-2 text-lg font-medium text-gray-900">
+            No products found
+          </h3>
+          <p className="mb-4 text-gray-600">
+            {searchTerm
+              ? "Try adjusting your search terms."
+              : "Get started by adding your first product."}
+          </p>
+          {!searchTerm && (
+            <button
+              onClick={handleAddProduct}
+              className="inline-flex items-center px-4 py-2 text-white bg-orange-600 rounded-lg hover:bg-orange-700"
+            >
+              <PlusIcon className="mr-2 w-5 h-5" />
+              Add First Product
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Modal */}
       <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={setIsModalOpen}>
+        <Dialog
+          as="div"
+          className="relative z-10"
+          onClose={() => setIsModalOpen(false)}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -210,8 +421,8 @@ const Products: React.FC = () => {
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="overflow-y-auto fixed inset-0">
+            <div className="flex justify-center items-center p-4 min-h-full text-center">
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -222,114 +433,157 @@ const Products: React.FC = () => {
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                    {selectedProduct ? 'Edit Product' : 'Add New Product'}
+                  <Dialog.Title
+                    as="h3"
+                    className="mb-4 text-lg font-medium leading-6 text-gray-900"
+                  >
+                    {selectedProduct ? "Edit Product" : "Add New Product"}
                   </Dialog.Title>
-                  
+
                   <form onSubmit={handleSubmitProduct} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
+                        Product Name *
+                      </label>
                       <input
                         type="text"
-                        defaultValue={selectedProduct?.name || ''}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        required
+                        value={formData.name}
+                        onChange={(e) =>
+                          handleFormChange("name", e.target.value)
+                        }
+                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
+                        MSME *
+                      </label>
+                      <select
+                        required
+                        value={formData.msme_id}
+                        onChange={(e) =>
+                          handleFormChange("msme_id", e.target.value)
+                        }
+                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      >
+                        <option value="">Select MSME</option>
+                        {msmes.map((msme) => (
+                          <option key={msme.id} value={msme.id}>
+                            {msme.brand}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
+                        Description *
+                      </label>
                       <textarea
                         rows={3}
-                        defaultValue={selectedProduct?.description || ''}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        required
+                        value={formData.description}
+                        onChange={(e) =>
+                          handleFormChange("description", e.target.value)
+                        }
+                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (IDR)</label>
+                        <label className="block mb-1 text-sm font-medium text-gray-700">
+                          Price (IDR) *
+                        </label>
                         <input
                           type="number"
-                          defaultValue={selectedProduct?.price || ''}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          required
+                          value={formData.price}
+                          onChange={(e) =>
+                            handleFormChange(
+                              "price",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                        <label className="block mb-1 text-sm font-medium text-gray-700">
+                          Delivery Time *
+                        </label>
                         <input
-                          type="number"
-                          defaultValue={selectedProduct?.stock || ''}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          type="text"
+                          required
+                          value={formData.deliveryTime}
+                          onChange={(e) =>
+                            handleFormChange("deliveryTime", e.target.value)
+                          }
+                          placeholder="e.g., 3-5 working days"
+                          className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         />
                       </div>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
+                        Material *
+                      </label>
                       <input
                         type="text"
-                        defaultValue={selectedProduct?.material || ''}
+                        required
+                        value={formData.material}
+                        onChange={(e) =>
+                          handleFormChange("material", e.target.value)
+                        }
                         placeholder="e.g., Coconut shell, natural fiber"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Durability</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
+                        Durability *
+                      </label>
                       <input
                         type="text"
-                        defaultValue={selectedProduct?.durability || ''}
+                        required
+                        value={formData.durability}
+                        onChange={(e) =>
+                          handleFormChange("durability", e.target.value)
+                        }
                         placeholder="e.g., 5+ years with proper care"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label>
-                      <input
-                        type="text"
-                        defaultValue={selectedProduct?.deliveryTime || ''}
-                        placeholder="e.g., 3-5 working days"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Product Image URL</label>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
+                        Product Image
+                      </label>
                       <div className="flex items-center space-x-4">
-                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <PhotoIcon className="h-8 w-8 text-gray-400" />
+                        <div className="flex justify-center items-center w-20 h-20 bg-gray-200 rounded-lg">
+                          <PhotoIcon className="w-8 h-8 text-gray-400" />
                         </div>
                         <div className="flex-1">
                           <input
                             type="file"
                             accept="image/*"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            onChange={(e) =>
+                              setImageFile(e.target.files?.[0] || null)
+                            }
+                            className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                           />
-                          <p className="text-xs text-gray-500 mt-1">JPG, PNG, or GIF. Max size 5MB.</p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            JPG, PNG, or GIF. Max size 5MB.
+                          </p>
                         </div>
                       </div>
                     </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Product Gallery</label>
-                      <div className="grid grid-cols-4 gap-4 mb-4">
-                        {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                            <PhotoIcon className="h-8 w-8 text-gray-400" />
-                          </div>
-                        ))}
-                      </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Select multiple images for product gallery</p>
-                    </div>
-                    
-                    <div className="flex justify-end space-x-3 pt-4">
+
+                    <div className="flex justify-end pt-4 space-x-3">
                       <button
                         type="button"
                         onClick={() => setIsModalOpen(false)}
@@ -339,9 +593,14 @@ const Products: React.FC = () => {
                       </button>
                       <button
                         type="submit"
-                        className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
+                        disabled={crudLoading || uploadLoading}
+                        className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50"
                       >
-                        {selectedProduct ? 'Update' : 'Create'}
+                        {crudLoading || uploadLoading
+                          ? "Saving..."
+                          : selectedProduct
+                          ? "Update"
+                          : "Create"}
                       </button>
                     </div>
                   </form>
@@ -357,20 +616,14 @@ const Products: React.FC = () => {
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDeleteProduct}
-        title="Hapus Produk"
-        message={`Apakah Anda yakin ingin menghapus produk ${productToDelete?.name}? Tindakan ini tidak dapat dibatalkan.`}
-        confirmText="Hapus"
-        cancelText="Batal"
-        type="danger"
+        title="Delete Product"
+        message={`Are you sure you want to delete "${productToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
       />
 
       {/* Toast Notification */}
       {toast.show && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={hideToast}
-        />
+        <Toast type={toast.type} message={toast.message} onClose={hideToast} />
       )}
     </div>
   );

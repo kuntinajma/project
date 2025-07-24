@@ -18,21 +18,23 @@ export function useUploadFiles() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const uploadFiles = async (files: FileList | null) => {
+  const uploadFiles = async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return [];
 
     setUploading(true);
     setError(null);
 
     const formData = new FormData();
-    Array.from(files).forEach((file) => {
+    // Handle both FileList and File[] by converting to array
+    const fileArray = Array.isArray(files) ? files : Array.from(files);
+    fileArray.forEach((file) => {
       formData.append("files", file);
     });
 
     try {
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:3005/api"
         }/files/upload`,
         {
           method: "POST",

@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'superadmin' | 'admin' | 'msme' | 'contributor' | 'traveler';
+  role: "superadmin" | "admin" | "msme" | "contributor" | "traveler";
   verified?: boolean;
   university?: string;
   major?: string;
@@ -15,7 +15,7 @@ export interface Destination {
   description: string;
   shortDescription: string;
   image: string;
-  category: 'beaches' | 'culture' | 'nature' | 'adventure';
+  category: "beaches" | "culture" | "nature" | "adventure";
   location: {
     lat: number;
     lng: number;
@@ -30,10 +30,12 @@ export interface TourPackage {
   facilities: string[];
   duration: string;
   minPersons: number;
+  maxPersons?: number;
   description: string;
   image: string;
   popular?: boolean;
   whatsappContact: string;
+  whatsappBookingUrl?: string;
 }
 
 export interface CulturalContent {
@@ -41,9 +43,10 @@ export interface CulturalContent {
   title: string;
   description: string;
   image: string;
-  category: 'dance' | 'culinary' | 'customs' | 'wisdom';
+  category: "dance" | "culinary" | "customs" | "wisdom";
   gallery: string[];
   videos?: string[];
+  videoUrl?: string;
 }
 
 export interface MSMEProduct {
@@ -71,11 +74,17 @@ export interface Article {
   title: string;
   content: string;
   excerpt: string;
-  image: string;
-  author: string;
-  date: string;
-  category: 'tips' | 'tourism' | 'culture' | 'msmes' | 'environment';
-  approved: boolean;
+  featuredImage: string; // Changed from 'image' to match API
+  authorName: string; // Changed from 'author' to match API
+  publishedAt: string; // Changed from 'date' to match API
+  category: "tips" | "tourism" | "culture" | "msmes" | "environment";
+  status: "draft" | "pending" | "published" | "rejected";
+  isFeatured: boolean;
+  viewCount: number;
+  tags: string[];
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Testimonial {
@@ -106,7 +115,7 @@ export interface MSME {
   id: string;
   brand: string;
   description: string;
-  phone:string;
+  phone: string;
   whatsapp: string;
   shopee: string;
   instagram: string;
