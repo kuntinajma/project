@@ -4,19 +4,23 @@ const { pool } = require('../config/database');
 const getAllBookings = async (req, res) => {
   try {
     const { page = 1, limit = 10, status, search } = req.query;
-    const offset = (page - 1) * limit;
+    
+    // Convert pagination parameters to numbers
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const offsetNum = (pageNum - 1) * limitNum;
 
     let whereClause = 'WHERE 1=1';
     let params = [];
 
-    if (status) {
+    if (status && status !== 'all') {
       whereClause += ' AND b.status = ?';
       params.push(status);
     }
 
     if (search) {
-      whereClause += ' AND (b.customer_name LIKE ? OR b.customer_email LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      whereClause += ' AND (b.customer_name LIKE ? OR b.customer_email LIKE ? OR b.customer_phone LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     // Get total count
@@ -33,21 +37,21 @@ const getAllBookings = async (req, res) => {
        ${whereClause} 
        ORDER BY b.created_at DESC 
        LIMIT ? OFFSET ?`,
-      [...params, parseInt(limit), offset]
+      [...params, limitNum, offsetNum]
     );
 
     const total = countResult[0].total;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / limitNum);
 
     res.json({
       success: true,
       data: {
         bookings,
         pagination: {
-          currentPage: parseInt(page),
+          currentPage: pageNum,
           totalPages,
           totalItems: total,
-          itemsPerPage: parseInt(limit)
+          itemsPerPage: limitNum
         }
       }
     });

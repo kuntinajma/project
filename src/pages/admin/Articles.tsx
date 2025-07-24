@@ -17,21 +17,22 @@ import { useAuth } from "../../context/AuthContext";
 import Toast from "../../components/common/Toast";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../hooks/useToast";
-import useArticles, { ArticleQuery } from "../../hooks/useArticles";
+import { useArticles, Article } from "../../hooks/useArticles";
 import useArticlesCRUD from "../../hooks/useArticlesCRUD";
 import { useUploadFiles } from "../../hooks/useUploadFiles";
-import { Article } from "../../types";
 
 const Articles: React.FC = () => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
-  const [prevArticles, setPrevArticles] = useState<Article[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(10);
   const { toast, showToast, hideToast } = useToast();
 
   // Form data state
@@ -47,84 +48,75 @@ const Articles: React.FC = () => {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
 
-  // API state and queries
-  const [query, setQuery] = useState<ArticleQuery>({
-    page: 1,
-    limit: 10,
-    search: "",
-    status: undefined,
-    category: undefined,
-  });
-
   // Hooks for API operations
   const {
-    articles,
-    loading: articlesLoading,
-    error: articlesError,
-  } = useArticles(query);
+    getArticles,
+    loading: fetchLoading,
+    error: fetchError,
+  } = useArticles();
+  
   const {
     createArticle,
     updateArticle,
     deleteArticle,
     loading: crudLoading,
+    error: crudError,
   } = useArticlesCRUD();
+  
   const { uploadFiles, uploading: uploadLoading } = useUploadFiles();
 
-  // Use previous data while loading
+  // State to store articles data
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: limit
+  });
+
+  // Debounce search term updates
   useEffect(() => {
-    if (articles.length > 0) {
-      setPrevArticles(articles);
-    }
-  }, [articles]);
-
-  // Handle search with debounce
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
+  // Fetch articles when component mounts or when filters/search change
   useEffect(() => {
-    if (searchTerm === query.search) return;
+    const fetchArticles = async () => {
+      try {
+        const category = filterCategory === "all" ? undefined : filterCategory;
+        const status = filterStatus === "all" ? undefined : filterStatus;
+        const response = await getArticles(
+          currentPage,
+          limit,
+          category,
+          debouncedSearchTerm || undefined,
+          status
+        );
+        setArticles(response.articles);
+        setPagination(response.pagination);
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+        showToast('error', 'Failed to fetch articles');
+      }
+    };
 
-    const handler = setTimeout(() => {
-      setQuery((prev) => ({
-        ...prev,
-        search: searchTerm,
-        page: 1,
-      }));
-    }, 400);
-
-    return () => clearTimeout(handler);
-  }, [searchTerm, query.search]);
-
-  // Update query when filters change
-  useEffect(() => {
-    setQuery((prev) => ({
-      ...prev,
-      status: filterStatus === "all" ? undefined : filterStatus,
-      category: filterCategory === "all" ? undefined : filterCategory,
-      page: 1,
-    }));
-  }, [filterStatus, filterCategory]);
-
-  // Use previous data while loading
-  const displayArticles = articlesLoading ? prevArticles : articles;
+    fetchArticles();
+  }, [currentPage, limit, filterCategory, filterStatus, debouncedSearchTerm, getArticles, showToast]);
 
   // Filter articles based on user role
   const getFilteredArticles = () => {
-    let filtered = displayArticles;
+    let filtered = articles;
 
     // If contributor, only show their own articles
     if (user?.role === "contributor") {
-      filtered = articles.filter((article) => article.authorName === user.name);
+      filtered = articles.filter((article) => article.authorId === String(user?.id));
     }
 
-    // Apply search and filters
-    return filtered.filter((article) => {
-      const matchesSearch =
-        article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.authorName.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        filterStatus === "all" || article.status === filterStatus;
-      const matchesCategory =
-        filterCategory === "all" || article.category === filterCategory;
-      return matchesSearch && matchesStatus && matchesCategory;
-    });
+    return filtered;
   };
 
   const filteredArticles = getFilteredArticles();
@@ -136,7 +128,7 @@ const Articles: React.FC = () => {
       content: "",
       excerpt: "",
       category: "tips",
-      status: "draft" as "draft" | "pending" | "published" | "rejected",
+      status: "draft",
       isFeatured: false,
       tags: [],
       featuredImage: "",
@@ -150,12 +142,12 @@ const Articles: React.FC = () => {
     setFormData({
       title: article.title,
       content: article.content,
-      excerpt: article.excerpt,
+      excerpt: article.excerpt || "",
       category: article.category,
       status: article.status,
       isFeatured: article.isFeatured,
-      tags: article.tags,
-      featuredImage: article.featuredImage,
+      tags: article.tags || [],
+      featuredImage: article.featuredImage || "",
     });
     setImageFile(null);
     setIsModalOpen(true);
@@ -168,23 +160,31 @@ const Articles: React.FC = () => {
     }));
   };
 
-  const handleDeleteArticle = (article: any) => {
+  const handleDeleteArticle = (article: Article) => {
     setArticleToDelete(article);
     setIsDeleteDialogOpen(true);
   };
 
   const confirmDeleteArticle = async () => {
-    if (!articleToDelete || !token) return;
+    if (!articleToDelete) return;
 
     try {
-      const result = await deleteArticle(articleToDelete.id, token);
+      const result = await deleteArticle(articleToDelete.id);
       if (result.success) {
         showToast(
           "success",
           `Artikel ${articleToDelete.title} berhasil dihapus`
         );
-        // Refresh articles list
-        setQuery((prev) => ({ ...prev }));
+        
+        // Remove the deleted article from the current list instead of making a new API call
+        setArticles(prev => prev.filter(a => a.id !== articleToDelete.id));
+        
+        // Update pagination count
+        setPagination(prev => ({
+          ...prev,
+          totalItems: prev.totalItems - 1,
+          totalPages: Math.ceil((prev.totalItems - 1) / prev.itemsPerPage)
+        }));
       } else {
         showToast("error", result.message || "Gagal menghapus artikel");
       }
@@ -199,36 +199,73 @@ const Articles: React.FC = () => {
 
   const handleSubmitArticle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return;
+
+    // Validate form data
+    if (!formData.title || formData.title.length < 5) {
+      showToast("error", "Judul harus minimal 5 karakter");
+      return;
+    }
+
+    if (!formData.content || formData.content.length < 10) {
+      showToast("error", "Konten artikel minimal 10 karakter");
+      return;
+    }
 
     try {
-      let featuredImage = formData.featuredImage;
+      let featuredImage = formData.featuredImage || null;
 
       // Upload image if file is selected
       if (imageFile) {
-        const fileList = new FileList();
-        Object.defineProperty(fileList, "0", { value: imageFile });
-        Object.defineProperty(fileList, "length", { value: 1 });
-
-        const uploadedUrls = await uploadFiles(fileList);
-        if (uploadedUrls.length > 0) {
-          featuredImage = uploadedUrls[0];
+        try {
+          const uploadedUrls = await uploadFiles([imageFile]);
+          if (uploadedUrls.length > 0) {
+            featuredImage = uploadedUrls[0];
+          }
+        } catch (error) {
+          console.error('Image upload error:', error);
+          showToast("error", "Failed to upload image");
         }
       }
 
+      // Prepare article data with proper null handling
       const articleData = {
         ...formData,
         featuredImage,
+        excerpt: formData.excerpt || null,
+        tags: formData.tags || []
       };
 
-      let result;
+      type ArticleResult = {
+        success: boolean;
+        message: string;
+        data: Article | null;
+        errors?: Array<{ msg: string; param: string; location: string }>;
+      };
+
+      let result: ArticleResult;
       if (selectedArticle) {
-        result = await updateArticle(
-          { ...articleData, id: selectedArticle.id },
-          token
-        );
+        result = await updateArticle(selectedArticle.id, articleData);
+        
+        if (result.success && result.data) {
+          // Update the article in the current list
+          setArticles(prev => prev.map(a => 
+            a.id === selectedArticle.id ? result.data as Article : a
+          ));
+        }
       } else {
-        result = await createArticle(articleData, token);
+        result = await createArticle(articleData);
+        
+        if (result.success && result.data) {
+          // Add the new article to the current list
+          setArticles(prev => [result.data as Article, ...prev]);
+          
+          // Update pagination count
+          setPagination(prev => ({
+            ...prev,
+            totalItems: prev.totalItems + 1,
+            totalPages: Math.ceil((prev.totalItems + 1) / prev.itemsPerPage)
+          }));
+        }
       }
 
       if (result.success) {
@@ -241,30 +278,101 @@ const Articles: React.FC = () => {
           content: "",
           excerpt: "",
           category: "tips",
-          status: "draft" as "draft" | "pending" | "published",
+          status: "draft",
           isFeatured: false,
           tags: [],
           featuredImage: "",
         });
         setImageFile(null);
-        // Refresh articles list
-        setQuery((prev) => ({ ...prev }));
       } else {
-        showToast("error", result.message || "Gagal menyimpan artikel");
+        // Show specific error message if available
+        if (result.message) {
+          showToast("error", result.message);
+        } else if (result.errors && result.errors.length > 0) {
+          // Display validation errors
+          const errorMessages = result.errors.map((err) => err.msg).join(", ");
+          showToast("error", `Validasi gagal: ${errorMessages}`);
+        } else {
+          showToast("error", "Gagal menyimpan artikel");
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submit error:", error);
-      showToast("error", "Terjadi kesalahan saat menyimpan artikel");
+      
+      // Handle specific error types
+      if (error.response && error.response.errors) {
+        const errorMessages = error.response.errors.map((err: any) => err.msg).join(", ");
+        showToast("error", `Validasi gagal: ${errorMessages}`);
+      } else if (error.response && error.response.message) {
+        showToast("error", error.response.message);
+      } else {
+        showToast("error", "Terjadi kesalahan saat menyimpan artikel");
+      }
     }
   };
 
-  const handleApproveArticle = (article: any) => {
-    showToast("success", `Artikel ${article.title} berhasil disetujui`);
+  const handleApproveArticle = async (article: Article) => {
+    try {
+      const result = await updateArticle(article.id, {
+        title: article.title,
+        content: article.content,
+        excerpt: article.excerpt,
+        category: article.category,
+        status: "published",
+        featuredImage: article.featuredImage,
+        tags: article.tags,
+        isFeatured: article.isFeatured
+      });
+      
+      if (result.success) {
+        showToast("success", `Artikel ${article.title} berhasil disetujui`);
+        
+        // Update the article in the current list
+        if (result.data) {
+          setArticles(prev => prev.map(a => 
+            a.id === article.id ? result.data : a
+          ));
+        }
+      } else {
+        showToast("error", result.message || "Gagal menyetujui artikel");
+      }
+    } catch (error) {
+      console.error("Approve error:", error);
+      showToast("error", "Terjadi kesalahan saat menyetujui artikel");
+    }
   };
 
-  const handleRejectArticle = (article: any) => {
-    showToast("error", `Artikel ${article.title} ditolak`);
+  const handleRejectArticle = async (article: Article) => {
+    try {
+      const result = await updateArticle(article.id, {
+        title: article.title,
+        content: article.content,
+        excerpt: article.excerpt,
+        category: article.category,
+        status: "rejected",
+        featuredImage: article.featuredImage,
+        tags: article.tags,
+        isFeatured: article.isFeatured
+      });
+      
+      if (result.success) {
+        showToast("error", `Artikel ${article.title} ditolak`);
+        
+        // Update the article in the current list
+        if (result.data) {
+          setArticles(prev => prev.map(a => 
+            a.id === article.id ? result.data : a
+          ));
+        }
+      } else {
+        showToast("error", result.message || "Gagal menolak artikel");
+      }
+    } catch (error) {
+      console.error("Reject error:", error);
+      showToast("error", "Terjadi kesalahan saat menolak artikel");
+    }
   };
+  
   const getStatusColor = (status: string) => {
     switch (status) {
       case "published":
@@ -373,85 +481,132 @@ const Articles: React.FC = () => {
 
       {/* Articles List */}
       <div className="space-y-4">
-        {filteredArticles.map((article) => (
-          <div key={article.id} className="p-6 bg-white rounded-lg shadow-md">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="flex items-center mb-2 space-x-3">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    {article.title}
-                  </h3>
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
-                      article.status
-                    )}`}
-                  >
-                    {article.status}
-                  </span>
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(
-                      article.category
-                    )}`}
-                  >
-                    {article.category}
-                  </span>
-                </div>
-
-                <p className="mb-3 text-gray-600">{article.excerpt}</p>
-
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>by {article.authorName}</span>
-                  <span>•</span>
-                  <span>
-                    {new Date(article.publishedAt).toLocaleDateString()}
-                  </span>
-                  <span>•</span>
-                  <span>{article.viewCount} views</span>
-                </div>
-              </div>
-
-              <div className="flex items-center ml-4 space-x-2">
-                {canApproveReject && article.status === "pending" && (
-                  <>
-                    <button
-                      onClick={() => handleApproveArticle(article)}
-                      className="p-2 text-green-600 hover:text-green-700"
+        {fetchLoading ? (
+          <div className="p-6 text-center bg-white rounded-lg shadow-md">
+            Loading articles...
+          </div>
+        ) : filteredArticles.length === 0 ? (
+          <div className="p-6 text-center bg-white rounded-lg shadow-md">
+            No articles found
+          </div>
+        ) : (
+          filteredArticles.map((article) => (
+            <div key={article.id} className="p-6 bg-white rounded-lg shadow-md">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center mb-2 space-x-3">
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {article.title}
+                    </h3>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
+                        article.status
+                      )}`}
                     >
-                      <CheckCircleIcon className="w-5 h-5" />
-                    </button>
+                      {article.status}
+                    </span>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(
+                        article.category
+                      )}`}
+                    >
+                      {article.category}
+                    </span>
+                  </div>
+
+                  <p className="mb-3 text-gray-600">{article.excerpt}</p>
+
+                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <span>by {article.authorName || 'Unknown'}</span>
+                    <span>•</span>
+                    <span>
+                      {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'Not published'}
+                    </span>
+                    <span>•</span>
+                    <span>{article.viewCount || 0} views</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center ml-4 space-x-2">
+                  {canApproveReject && article.status === "pending" && (
+                    <>
+                      <button
+                        onClick={() => handleApproveArticle(article)}
+                        className="p-2 text-green-600 hover:text-green-700"
+                      >
+                        <CheckCircleIcon className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleRejectArticle(article)}
+                        className="p-2 text-red-600 hover:text-red-700"
+                      >
+                        <XCircleIcon className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+                  <button className="p-2 text-blue-600 hover:text-blue-700">
+                    <EyeIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleEditArticle(article)}
+                    className="p-2 text-green-600 hover:text-green-700"
+                  >
+                    <PencilIcon className="w-5 h-5" />
+                  </button>
+                  {(user?.role === "contributor" &&
+                    article.authorId === String(user?.id)) ||
+                  user?.role === "admin" ||
+                  user?.role === "superadmin" ? (
                     <button
-                      onClick={() => handleRejectArticle(article)}
+                      onClick={() => handleDeleteArticle(article)}
                       className="p-2 text-red-600 hover:text-red-700"
                     >
-                      <XCircleIcon className="w-5 h-5" />
+                      <TrashIcon className="w-5 h-5" />
                     </button>
-                  </>
-                )}
-                <button className="p-2 text-blue-600 hover:text-blue-700">
-                  <EyeIcon className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleEditArticle(article)}
-                  className="p-2 text-green-600 hover:text-green-700"
-                >
-                  <PencilIcon className="w-5 h-5" />
-                </button>
-                {(user?.role === "contributor" &&
-                  article.authorName === user.name) ||
-                user?.role === "admin" ||
-                user?.role === "superadmin" ? (
-                  <button
-                    onClick={() => handleDeleteArticle(article)}
-                    className="p-2 text-red-600 hover:text-red-700"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
-                ) : null}
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          <nav className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded-md ${
+                  page === currentPage
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
+              disabled={currentPage === pagination.totalPages}
+              className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </nav>
+        </div>
+      )}
 
       {/* Add/Edit Article Modal */}
       <Transition appear show={isModalOpen} as={Fragment}>
@@ -607,7 +762,6 @@ const Articles: React.FC = () => {
                         </div>
                       </div>
                     </div>
-
                     <div className="flex justify-end pt-4 space-x-3">
                       <button
                         type="button"

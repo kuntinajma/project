@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MagnifyingGlassIcon,
   EyeIcon,
@@ -13,138 +13,183 @@ import { Fragment } from 'react';
 import Toast from '../../components/common/Toast';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { useToast } from '../../hooks/useToast';
+import { useContact, ContactMessage } from '../../hooks/useContact';
 
 const ContactMessages: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<any>(null);
-  const [messageToDelete, setMessageToDelete] = useState<any>(null);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [messageToDelete, setMessageToDelete] = useState<ContactMessage | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [replyText, setReplyText] = useState('');
-  const { toast, showToast, hideToast } = useToast();
-
-  const messages = [
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '+62 812-3456-7890',
-      subject: 'Inquiry about Island Hopping Package',
-      message: 'Hi, I would like to know more about the island hopping package for 6 people. What are the available dates in March?',
-      isRead: false,
-      hasReply: false,
-      adminReply: null,
-      createdAt: '2024-01-15 10:30:00',
-      repliedAt: null
-    },
-    {
-      id: 2,
-      name: 'Ahmad Rahman',
-      email: 'ahmad@example.com',
-      phone: '+62 812-3456-7891',
-      subject: 'UMKM Partnership Inquiry',
-      message: 'I am interested in becoming a partner for selling local handicrafts. Could you provide information about the requirements?',
-      isRead: true,
-      hasReply: true,
-      adminReply: 'Thank you for your interest! Please visit our office with your business documents for the partnership process.',
-      createdAt: '2024-01-14 14:20:00',
-      repliedAt: '2024-01-14 16:45:00'
-    },
-    {
-      id: 3,
-      name: 'Maria Santos',
-      email: 'maria@example.com',
-      phone: '+62 812-3456-7892',
-      subject: 'Transportation Schedule',
-      message: 'What is the boat schedule from Bulukumba to Laiya Island? Are there any changes during the rainy season?',
-      isRead: true,
-      hasReply: false,
-      adminReply: null,
-      createdAt: '2024-01-13 09:15:00',
-      repliedAt: null
-    },
-    {
-      id: 4,
-      name: 'David Kim',
-      email: 'david@example.com',
-      phone: '+62 812-3456-7893',
-      subject: 'Photography Permission',
-      message: 'I am a professional photographer and would like to conduct a photo shoot on the island. Do I need special permission?',
-      isRead: false,
-      hasReply: false,
-      adminReply: null,
-      createdAt: '2024-01-12 16:45:00',
-      repliedAt: null
-    }
-  ];
-
-  const filteredMessages = messages.filter(message => {
-    const matchesSearch = message.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.subject.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'unread' && !message.isRead) ||
-                         (filterStatus === 'read' && message.isRead) ||
-                         (filterStatus === 'replied' && message.hasReply) ||
-                         (filterStatus === 'unreplied' && !message.hasReply);
-    return matchesSearch && matchesStatus;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10
   });
+  const { toast, showToast, hideToast } = useToast();
+  const { 
+    loading, 
+    error, 
+    getMessages, 
+    getMessageById, 
+    replyToMessage, 
+    markAsRead, 
+    deleteMessage 
+  } = useContact();
 
-  const handleViewMessage = (message: any) => {
-    setSelectedMessage(message);
-    setIsViewModalOpen(true);
-    // Mark as read when viewed
-    if (!message.isRead) {
-      showToast('info', 'Pesan ditandai sebagai sudah dibaca');
+  // Load messages on component mount and when filters change
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        const response = await getMessages(
+          currentPage,
+          10,
+          filterStatus === 'all' ? undefined : filterStatus,
+          searchTerm || undefined
+        );
+        setMessages(response.messages);
+        setPagination(response.pagination);
+      } catch (error: any) {
+        showToast('error', error.response?.message || 'Failed to load messages');
+      }
+    };
+    loadMessages();
+  }, [currentPage, filterStatus, searchTerm]);
+
+  // Debounce search term changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const handleViewMessage = async (message: ContactMessage) => {
+    try {
+      // Get the latest message data
+      const response = await getMessageById(message.id);
+      setSelectedMessage(response);
+      setIsViewModalOpen(true);
+      
+      // Mark as read if not already read
+      if (!message.is_read) {
+        await markAsRead(message.id);
+        showToast('info', 'Pesan ditandai sebagai sudah dibaca');
+        
+        // Refresh the messages list
+        const messagesResponse = await getMessages(
+          currentPage,
+          10,
+          filterStatus === 'all' ? undefined : filterStatus,
+          searchTerm || undefined
+        );
+        setMessages(messagesResponse.messages);
+      }
+    } catch (error: any) {
+      showToast('error', error.response?.message || 'Failed to view message');
     }
   };
 
-  const handleReplyMessage = (message: any) => {
-    setSelectedMessage(message);
-    setReplyText(message.adminReply || '');
-    setIsReplyModalOpen(true);
+  const handleReplyMessage = async (message: ContactMessage) => {
+    try {
+      // Get the latest message data
+      const response = await getMessageById(message.id);
+      setSelectedMessage(response);
+      setReplyText(response.admin_reply || '');
+      setIsReplyModalOpen(true);
+    } catch (error: any) {
+      showToast('error', error.response?.message || 'Failed to load message for reply');
+    }
   };
 
-  const handleDeleteMessage = (message: any) => {
+  const handleDeleteMessage = (message: ContactMessage) => {
     setMessageToDelete(message);
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDeleteMessage = () => {
-    setTimeout(() => {
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete) return;
+    
+    try {
+      await deleteMessage(messageToDelete.id);
       showToast('success', `Pesan dari ${messageToDelete.name} berhasil dihapus`);
+      
+      // Refresh the messages list
+      const response = await getMessages(
+        currentPage,
+        10,
+        filterStatus === 'all' ? undefined : filterStatus,
+        searchTerm || undefined
+      );
+      setMessages(response.messages);
+      setPagination(response.pagination);
+      
       setMessageToDelete(null);
-    }, 500);
+      setIsDeleteDialogOpen(false);
+    } catch (error: any) {
+      showToast('error', error.response?.message || 'Failed to delete message');
+    }
   };
 
-  const handleSubmitReply = (e: React.FormEvent) => {
+  const handleSubmitReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTimeout(() => {
+    
+    if (!selectedMessage || !replyText) return;
+    
+    try {
+      await replyToMessage(selectedMessage.id, replyText);
       showToast('success', `Balasan berhasil dikirim ke ${selectedMessage.email}`);
+      
+      // Refresh the messages list
+      const response = await getMessages(
+        currentPage,
+        10,
+        filterStatus === 'all' ? undefined : filterStatus,
+        searchTerm || undefined
+      );
+      setMessages(response.messages);
+      setPagination(response.pagination);
+      
       setIsReplyModalOpen(false);
       setSelectedMessage(null);
       setReplyText('');
-    }, 500);
+    } catch (error: any) {
+      showToast('error', error.response?.message || 'Failed to send reply');
+    }
   };
 
-  const getStatusColor = (message: any) => {
-    if (message.hasReply) return 'bg-green-100 text-green-800';
-    if (message.isRead) return 'bg-blue-100 text-blue-800';
+  const getStatusColor = (message: ContactMessage) => {
+    if (message.admin_reply) return 'bg-green-100 text-green-800';
+    if (message.is_read) return 'bg-blue-100 text-blue-800';
     return 'bg-yellow-100 text-yellow-800';
   };
 
-  const getStatusText = (message: any) => {
-    if (message.hasReply) return 'Replied';
-    if (message.isRead) return 'Read';
+  const getStatusText = (message: ContactMessage) => {
+    if (message.admin_reply) return 'Replied';
+    if (message.is_read) return 'Read';
     return 'New';
   };
 
-  const getStatusIcon = (message: any) => {
-    if (message.hasReply) return <CheckCircleIcon className="h-4 w-4" />;
-    if (message.isRead) return <EyeIcon className="h-4 w-4" />;
+  const getStatusIcon = (message: ContactMessage) => {
+    if (message.admin_reply) return <CheckCircleIcon className="h-4 w-4" />;
+    if (message.is_read) return <EyeIcon className="h-4 w-4" />;
     return <ClockIcon className="h-4 w-4" />;
+  };
+
+  // Calculate pagination
+  const pageNumbers = [];
+  for (let i = 1; i <= pagination.totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -155,7 +200,7 @@ const ContactMessages: React.FC = () => {
           <p className="text-gray-600">Manage visitor inquiries and messages</p>
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <span className="font-medium">{messages.filter(m => !m.isRead).length}</span>
+          <span className="font-medium">{messages.filter(m => !m.is_read).length}</span>
           <span>unread messages</span>
         </div>
       </div>
@@ -206,8 +251,8 @@ const ContactMessages: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredMessages.map((message) => (
-                <tr key={message.id} className={`hover:bg-gray-50 ${!message.isRead ? 'bg-blue-50' : ''}`}>
+              {messages.map((message) => (
+                <tr key={message.id} className={`hover:bg-gray-50 ${!message.is_read ? 'bg-blue-50' : ''}`}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">{message.name}</div>
@@ -216,7 +261,7 @@ const ContactMessages: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{message.subject}</div>
+                    <div className="text-sm font-medium text-gray-900">{message.subject || '(No Subject)'}</div>
                     <div className="text-sm text-gray-500 truncate max-w-xs">
                       {message.message.substring(0, 100)}...
                     </div>
@@ -228,7 +273,7 @@ const ContactMessages: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(message.createdAt).toLocaleDateString('id-ID')}
+                    {new Date(message.created_at).toLocaleDateString('id-ID')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
@@ -254,9 +299,90 @@ const ContactMessages: React.FC = () => {
                   </td>
                 </tr>
               ))}
+              {messages.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                    {loading ? 'Loading messages...' : 'No messages found'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => handlePageChange(Math.min(pagination.totalPages, currentPage + 1))}
+                disabled={currentPage === pagination.totalPages}
+                className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  currentPage === pagination.totalPages ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing <span className="font-medium">{(currentPage - 1) * pagination.itemsPerPage + 1}</span> to{' '}
+                  <span className="font-medium">
+                    {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)}
+                  </span>{' '}
+                  of <span className="font-medium">{pagination.totalItems}</span> results
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === 1 ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="sr-only">Previous</span>
+                    <span>&laquo;</span>
+                  </button>
+                  {pageNumbers.map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`relative inline-flex items-center px-4 py-2 border ${
+                        page === currentPage
+                          ? 'bg-orange-500 text-white border-orange-500 z-10'
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      } text-sm font-medium`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handlePageChange(Math.min(pagination.totalPages, currentPage + 1))}
+                    disabled={currentPage === pagination.totalPages}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === pagination.totalPages ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="sr-only">Next</span>
+                    <span>&raquo;</span>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* View Message Modal */}
@@ -306,17 +432,17 @@ const ContactMessages: React.FC = () => {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Phone</label>
-                          <p className="text-sm text-gray-900">{selectedMessage.phone}</p>
+                          <p className="text-sm text-gray-900">{selectedMessage.phone || 'Not provided'}</p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Date</label>
-                          <p className="text-sm text-gray-900">{new Date(selectedMessage.createdAt).toLocaleString('id-ID')}</p>
+                          <p className="text-sm text-gray-900">{new Date(selectedMessage.created_at).toLocaleString('id-ID')}</p>
                         </div>
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Subject</label>
-                        <p className="text-sm text-gray-900">{selectedMessage.subject}</p>
+                        <p className="text-sm text-gray-900">{selectedMessage.subject || '(No Subject)'}</p>
                       </div>
                       
                       <div>
@@ -326,13 +452,13 @@ const ContactMessages: React.FC = () => {
                         </div>
                       </div>
                       
-                      {selectedMessage.hasReply && (
+                      {selectedMessage.admin_reply && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Admin Reply</label>
                           <div className="bg-blue-50 rounded-lg p-4">
-                            <p className="text-sm text-gray-900">{selectedMessage.adminReply}</p>
+                            <p className="text-sm text-gray-900">{selectedMessage.admin_reply}</p>
                             <p className="text-xs text-gray-500 mt-2">
-                              Replied on {new Date(selectedMessage.repliedAt).toLocaleString('id-ID')}
+                              Replied on {selectedMessage.replied_at ? new Date(selectedMessage.replied_at).toLocaleString('id-ID') : 'Unknown'}
                             </p>
                           </div>
                         </div>
@@ -352,7 +478,7 @@ const ContactMessages: React.FC = () => {
                       type="button"
                       onClick={() => {
                         setIsViewModalOpen(false);
-                        handleReplyMessage(selectedMessage);
+                        handleReplyMessage(selectedMessage!);
                       }}
                       className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
                     >

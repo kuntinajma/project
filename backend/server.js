@@ -35,7 +35,7 @@ app.use(
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000, // increase limit from 300 to 1000 requests per windowMs
   message: {
     success: false,
     message: "Terlalu banyak request, coba lagi nanti.",
@@ -72,20 +72,29 @@ app.use(
 // Test database connection
 testConnection();
 
-// Routes
+const usersRoutes = require('./routes/users');
+const contactRoutes = require('./routes/contact');
+const testimonialsRoutes = require('./routes/testimonials');
+const articlesRoutes = require('./routes/articles');
+const settingsRoutes = require('./routes/settings');
+const homeRoutes = require('./routes/home');
+
+// Routes - Remove duplicate route registrations
+app.use('/api/users', usersRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/testimonials', testimonialsRoutes);
+app.use('/api/articles', articlesRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/home', homeRoutes);
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/destinations", require("./routes/destinations"));
 app.use("/api/packages", require("./routes/packages"));
 app.use("/api/msme", require("./routes/msme"));
 app.use("/api/products", require("./routes/products"));
 app.use("/api/culture", require("./routes/culture"));
-app.use("/api/articles", require("./routes/articles"));
 app.use("/api/bookings", require("./routes/bookings"));
-app.use("/api/contact", require("./routes/contact"));
 app.use("/api/dashboard", require("./routes/dashboard"));
-
 app.use("/api/google-reviews", require("./routes/googleReviews"));
-app.use("/api/testimonials", require("./routes/testimonials"));
 app.use("/api/files", require("./routes/files"));
 
 // Health check endpoint

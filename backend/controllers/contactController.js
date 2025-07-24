@@ -3,20 +3,29 @@ const { pool } = require('../config/database');
 // Get all contact messages
 const getAllMessages = async (req, res) => {
   try {
-    const { page = 1, limit = 10, is_read, search } = req.query;
-    const offset = (page - 1) * limit;
+    const { page = 1, limit = 10, status, search } = req.query;
+    
+    // Convert pagination parameters to integers
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const offsetNum = (pageNum - 1) * limitNum;
 
     let whereClause = 'WHERE 1=1';
     let params = [];
 
-    if (is_read !== undefined) {
-      whereClause += ' AND is_read = ?';
-      params.push(is_read === 'true');
+    if (status === 'read') {
+      whereClause += ' AND is_read = TRUE AND admin_reply IS NULL';
+    } else if (status === 'unread') {
+      whereClause += ' AND is_read = FALSE';
+    } else if (status === 'replied') {
+      whereClause += ' AND admin_reply IS NOT NULL';
+    } else if (status === 'unreplied') {
+      whereClause += ' AND admin_reply IS NULL';
     }
 
     if (search) {
-      whereClause += ' AND (name LIKE ? OR email LIKE ? OR subject LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      whereClause += ' AND (name LIKE ? OR email LIKE ? OR subject LIKE ? OR message LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     // Get total count
@@ -25,24 +34,26 @@ const getAllMessages = async (req, res) => {
       params
     );
 
-    // Get messages with pagination
-    const [messages] = await pool.execute(
-      `SELECT * FROM contact_messages ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, parseInt(limit), offset]
-    );
+    // Construct the query with direct values instead of parameters for LIMIT and OFFSET
+    const query = `SELECT * FROM contact_messages ${whereClause} 
+                   ORDER BY created_at DESC 
+                   LIMIT ${limitNum} OFFSET ${offsetNum}`;
+
+    // Execute the query with only WHERE clause parameters
+    const [messages] = await pool.execute(query, params);
 
     const total = countResult[0].total;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / limitNum);
 
     res.json({
       success: true,
       data: {
         messages,
         pagination: {
-          currentPage: parseInt(page),
+          currentPage: pageNum,
           totalPages,
           totalItems: total,
-          itemsPerPage: parseInt(limit)
+          itemsPerPage: limitNum
         }
       }
     });
@@ -72,11 +83,13 @@ const getMessageById = async (req, res) => {
       });
     }
 
-    // Mark as read
-    await pool.execute(
-      'UPDATE contact_messages SET is_read = TRUE WHERE id = ?',
-      [id]
-    );
+    // Mark as read if not already read
+    if (!messages[0].is_read) {
+      await pool.execute(
+        'UPDATE contact_messages SET is_read = TRUE WHERE id = ?',
+        [id]
+      );
+    }
 
     res.json({
       success: true,
@@ -98,7 +111,7 @@ const createMessage = async (req, res) => {
 
     const [result] = await pool.execute(
       'INSERT INTO contact_messages (name, email, phone, subject, message) VALUES (?, ?, ?, ?, ?)',
-      [name, email, phone, subject, message]
+      [name, email, phone || null, subject || null, message]
     );
 
     const [newMessage] = await pool.execute(
@@ -126,6 +139,20 @@ const replyMessage = async (req, res) => {
     const { id } = req.params;
     const { admin_reply } = req.body;
 
+    // Check if message exists
+    const [messages] = await pool.execute(
+      'SELECT * FROM contact_messages WHERE id = ?',
+      [id]
+    );
+
+    if (messages.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pesan tidak ditemukan'
+      });
+    }
+
+    // Update with reply
     await pool.execute(
       'UPDATE contact_messages SET admin_reply = ?, replied_at = CURRENT_TIMESTAMP, is_read = TRUE WHERE id = ?',
       [admin_reply, id]
@@ -177,10 +204,71 @@ const deleteMessage = async (req, res) => {
   }
 };
 
+// Get unread messages count
+const getUnreadCount = async (req, res) => {
+  try {
+    const [result] = await pool.execute(
+      'SELECT COUNT(*) as count FROM contact_messages WHERE is_read = FALSE'
+    );
+
+    res.json({
+      success: true,
+      data: {
+        count: result[0].count
+      }
+    });
+  } catch (error) {
+    console.error('Get unread count error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error saat mengambil jumlah pesan belum dibaca'
+    });
+  }
+};
+
+// Mark message as read
+const markAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if message exists
+    const [messages] = await pool.execute(
+      'SELECT * FROM contact_messages WHERE id = ?',
+      [id]
+    );
+
+    if (messages.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pesan tidak ditemukan'
+      });
+    }
+
+    // Mark as read
+    await pool.execute(
+      'UPDATE contact_messages SET is_read = TRUE WHERE id = ?',
+      [id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Pesan ditandai sebagai sudah dibaca'
+    });
+  } catch (error) {
+    console.error('Mark as read error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error saat menandai pesan sebagai sudah dibaca'
+    });
+  }
+};
+
 module.exports = {
   getAllMessages,
   getMessageById,
   createMessage,
   replyMessage,
-  deleteMessage
+  deleteMessage,
+  getUnreadCount,
+  markAsRead
 };

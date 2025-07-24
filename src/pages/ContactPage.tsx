@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, Send, Upload, User, GraduationCap } from 'lucide-react';
 import { StarIcon as SolidStar } from '@heroicons/react/24/solid';
 import { StarIcon as OutlineStar } from '@heroicons/react/24/outline';
+import { useContact } from '../hooks/useContact';
+import { useTestimonials } from '../hooks/useTestimonials';
+import { useArticles } from '../hooks/useArticles';
+import { useAuth } from '../context/AuthContext';
 
 interface ContactPageProps {
   onNavigate: (page: string) => void;
@@ -37,27 +41,85 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
   const [testimonialSubmitting, setTestimonialSubmitting] = useState(false);
   const [testimonialSuccess, setTestimonialSuccess] = useState<string | null>(null);
   const [testimonialError, setTestimonialError] = useState<string | null>(null);
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState<string | null>(null);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contributeSubmitting, setContributeSubmitting] = useState(false);
+  const [contributeSuccess, setContributeSuccess] = useState<string | null>(null);
+  const [contributeError, setContributeError] = useState<string | null>(null);
+  
+  const { createMessage } = useContact();
+  const { createTestimonial } = useTestimonials();
+  const { createArticle } = useArticles();
+  const { user } = useAuth();
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle contact form submission
-    console.log('Contact form submitted:', contactForm);
-    alert('Thank you for your message! We will get back to you soon.');
-    setContactForm({ name: '', email: '', subject: '', message: '' });
+    setContactSubmitting(true);
+    setContactSuccess(null);
+    setContactError(null);
+
+    try {
+      await createMessage(contactForm);
+      setContactSuccess('Thank you for your message! We will get back to you soon.');
+      setContactForm({ name: '', email: '', subject: '', message: '' });
+    } catch (error: any) {
+      setContactError(error.response?.message || 'Failed to send message. Please try again later.');
+    } finally {
+      setContactSubmitting(false);
+    }
   };
 
-  const handleContributeSubmit = (e: React.FormEvent) => {
+  const handleContributeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle contribute form submission
-    console.log('Contribute form submitted:', contributeForm);
-    alert('Thank you for your contribution! We will review your article and get back to you.');
-    setContributeForm({ name: '', title: '', content: '', category: 'tips', image: null });
+    setContributeSubmitting(true);
+    setContributeSuccess(null);
+    setContributeError(null);
+    
+    try {
+      if (!user) {
+        throw new Error('You must be logged in to contribute an article');
+      }
+      
+      const articleData = {
+        title: contributeForm.title,
+        content: contributeForm.content,
+        category: contributeForm.category,
+        // If image is present, it would need to be uploaded separately
+        // This is a simplified version
+      };
+      
+      await createArticle(articleData);
+      setContributeSuccess('Thank you for your contribution! We will review your article and get back to you.');
+      setContributeForm({ name: '', title: '', content: '', category: 'tips', image: null });
+    } catch (error: any) {
+      setContributeError(error.response?.message || 'Failed to submit article. Please try again later.');
+    } finally {
+      setContributeSubmitting(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setContributeForm({ ...contributeForm, image: file });
+    }
+  };
+
+  const handleTestimonialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTestimonialSubmitting(true);
+    setTestimonialSuccess(null);
+    setTestimonialError(null);
+    
+    try {
+      await createTestimonial(testimonialForm);
+      setTestimonialSuccess('Testimonial berhasil dikirim. Terima kasih!');
+      setTestimonialForm({ name: '', star: 5, origin: '', message: '' });
+    } catch (error: any) {
+      setTestimonialError(error.response?.message || 'Gagal mengirim testimonial.');
+    } finally {
+      setTestimonialSubmitting(false);
     }
   };
 
@@ -234,12 +296,26 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   required
                 />
               </div>
+              
+              {contactSuccess && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                  {contactSuccess}
+                </div>
+              )}
+              
+              {contactError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  {contactError}
+                </div>
+              )}
+              
               <button
                 type="submit"
-                className="flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
+                disabled={contactSubmitting}
+                className="flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-70"
               >
                 <Send size={20} />
-                <span>Send Message</span>
+                <span>{contactSubmitting ? 'Sending...' : 'Send Message'}</span>
               </button>
             </form>
             </div>
@@ -310,12 +386,25 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   />
                   {contributeForm.image && <p className="text-sm text-gray-500 mt-2">{contributeForm.image.name}</p>}
                 </div>
+                {contributeSuccess && (
+                  <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                    {contributeSuccess}
+                  </div>
+                )}
+                
+                {contributeError && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    {contributeError}
+                  </div>
+                )}
+                
                 <button
                   type="submit"
-                  className="flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
+                  disabled={contributeSubmitting}
+                  className="flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-70"
                 >
                   <Upload size={20} />
-                  <span>Submit Article</span>
+                  <span>{contributeSubmitting ? 'Submitting...' : 'Submit Article'}</span>
                 </button>
               </form>
             </div>
@@ -323,30 +412,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Submit Your Testimonial</h3>
               <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  setTestimonialSubmitting(true);
-                  setTestimonialSuccess(null);
-                  setTestimonialError(null);
-                  try {
-                    const response = await fetch('/api/testimonials', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(testimonialForm),
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                      setTestimonialSuccess('Testimoni berhasil dikirim. Terima kasih!');
-                      setTestimonialForm({ name: '', star: 5, origin: '', message: '' });
-                    } else {
-                      setTestimonialError(data.message || 'Gagal mengirim testimoni.');
-                    }
-                  } catch (error) {
-                    setTestimonialError('Terjadi kesalahan saat mengirim testimoni.');
-                  } finally {
-                    setTestimonialSubmitting(false);
-                  }
-                }}
+                onSubmit={handleTestimonialSubmit}
                 className="space-y-6"
               >
                 <div>

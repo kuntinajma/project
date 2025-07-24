@@ -1,5 +1,6 @@
 import { ArrowLeft, Camera, MapPin, Star } from "lucide-react";
 import { Destination } from "../../types";
+import { useEffect, useState } from "react";
 
 interface Props {
 	destination: Destination;
@@ -14,6 +15,20 @@ export default function DestinationDetail({
 	onViewGallery,
 	onGetDirections,
 }: Props) {
+	const [mapUrl, setMapUrl] = useState("");
+
+	useEffect(() => {
+		// Create Google Maps URL using the destination's coordinates
+		const googleMapsUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${destination.location.lat},${destination.location.lng}&zoom=15`;
+		setMapUrl(googleMapsUrl);
+	}, [destination.location]);
+
+	const handleGetDirections = () => {
+		// Open Google Maps in a new tab with directions
+		const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination.location.lat},${destination.location.lng}`;
+		window.open(directionsUrl, "_blank");
+	};
+
 	return (
 		<div className="min-h-screen">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -81,8 +96,21 @@ export default function DestinationDetail({
 									{destination.location.lng.toFixed(4)}
 								</span>
 							</div>
-							<div className="bg-gray-200 rounded-lg h-64 flex items-center justify-center">
-								<p className="text-gray-600">Interactive Map Coming Soon</p>
+							<div className="rounded-lg h-64 overflow-hidden">
+								{mapUrl ? (
+									<iframe
+										title={`Map of ${destination.title}`}
+										width="100%"
+										height="100%"
+										frameBorder="0"
+										src={mapUrl}
+										allowFullScreen
+									></iframe>
+								) : (
+									<div className="bg-gray-200 h-full flex items-center justify-center">
+										<p className="text-gray-600">Loading map...</p>
+									</div>
+								)}
 							</div>
 						</div>
 
@@ -95,7 +123,7 @@ export default function DestinationDetail({
 								<span>View Gallery</span>
 							</button>
 							<button
-								onClick={onGetDirections}
+								onClick={handleGetDirections}
 								className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
 							>
 								<MapPin size={20} />

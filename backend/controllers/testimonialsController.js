@@ -1,21 +1,87 @@
 const { pool } = require('../config/database');
 
-// Get all testimonials
+// Get all testimonials with pagination
 const getAllTestimonials = async (req, res) => {
   try {
-    const [testimonials] = await pool.execute(
-      'SELECT * FROM testimonials ORDER BY created_at DESC'
+    const { page = 1, limit = 10, search } = req.query;
+    
+    // Convert pagination parameters to integers
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const offsetNum = (pageNum - 1) * limitNum;
+
+    let whereClause = 'WHERE 1=1';
+    let params = [];
+
+    if (search) {
+      whereClause += ' AND (name LIKE ? OR origin LIKE ? OR message LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    // Get total count
+    const [countResult] = await pool.execute(
+      `SELECT COUNT(*) as total FROM testimonials ${whereClause}`,
+      params
     );
+
+    // Construct the query with direct values instead of parameters for LIMIT and OFFSET
+    const query = `SELECT * FROM testimonials ${whereClause} 
+                   ORDER BY created_at DESC 
+                   LIMIT ${limitNum} OFFSET ${offsetNum}`;
+
+    // Execute the query with only WHERE clause parameters
+    const [testimonials] = await pool.execute(query, params);
+
+    const total = countResult[0].total;
+    const totalPages = Math.ceil(total / limitNum);
 
     res.json({
       success: true,
-      data: testimonials
+      data: {
+        testimonials,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: limitNum
+        }
+      }
     });
   } catch (error) {
     console.error('Get testimonials error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengambil data testimoni'
+      message: 'Server error saat mengambil data testimonial'
+    });
+  }
+};
+
+// Get testimonial by ID
+const getTestimonialById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [testimonials] = await pool.execute(
+      'SELECT * FROM testimonials WHERE id = ?',
+      [id]
+    );
+
+    if (testimonials.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Testimonial tidak ditemukan'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: testimonials[0]
+    });
+  } catch (error) {
+    console.error('Get testimonial error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error saat mengambil data testimonial'
     });
   }
 };
@@ -24,13 +90,6 @@ const getAllTestimonials = async (req, res) => {
 const createTestimonial = async (req, res) => {
   try {
     const { name, star, origin, message } = req.body;
-
-    if (!name || !star || !message) {
-      return res.status(400).json({
-        success: false,
-        message: 'Nama, bintang, dan pesan wajib diisi'
-      });
-    }
 
     const [result] = await pool.execute(
       'INSERT INTO testimonials (name, star, origin, message) VALUES (?, ?, ?, ?)',
@@ -44,14 +103,14 @@ const createTestimonial = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Testimoni berhasil dikirim',
+      message: 'Testimonial berhasil dibuat',
       data: newTestimonial[0]
     });
   } catch (error) {
     console.error('Create testimonial error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat mengirim testimoni'
+      message: 'Server error saat membuat testimonial'
     });
   }
 };
@@ -62,17 +121,24 @@ const updateTestimonial = async (req, res) => {
     const { id } = req.params;
     const { name, star, origin, message } = req.body;
 
-    const [result] = await pool.execute(
+    // Check if testimonial exists
+    const [existingTestimonials] = await pool.execute(
+      'SELECT id FROM testimonials WHERE id = ?',
+      [id]
+    );
+
+    if (existingTestimonials.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Testimonial tidak ditemukan'
+      });
+    }
+
+    // Update testimonial
+    await pool.execute(
       'UPDATE testimonials SET name = ?, star = ?, origin = ?, message = ? WHERE id = ?',
       [name, star, origin || null, message, id]
     );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Testimoni tidak ditemukan'
-      });
-    }
 
     const [updatedTestimonial] = await pool.execute(
       'SELECT * FROM testimonials WHERE id = ?',
@@ -81,14 +147,14 @@ const updateTestimonial = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Testimoni berhasil diperbarui',
+      message: 'Testimonial berhasil diupdate',
       data: updatedTestimonial[0]
     });
   } catch (error) {
     console.error('Update testimonial error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat memperbarui testimoni'
+      message: 'Server error saat mengupdate testimonial'
     });
   }
 };
@@ -106,26 +172,51 @@ const deleteTestimonial = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Testimoni tidak ditemukan'
+        message: 'Testimonial tidak ditemukan'
       });
     }
 
     res.json({
       success: true,
-      message: 'Testimoni berhasil dihapus'
+      message: 'Testimonial berhasil dihapus'
     });
   } catch (error) {
     console.error('Delete testimonial error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error saat menghapus testimoni'
+      message: 'Server error saat menghapus testimonial'
+    });
+  }
+};
+
+// Get featured testimonials (for homepage)
+const getFeaturedTestimonials = async (req, res) => {
+  try {
+    const { limit = 5 } = req.query;
+    const limitNum = parseInt(limit, 10);
+
+    const [testimonials] = await pool.execute(
+      `SELECT * FROM testimonials ORDER BY star DESC, created_at DESC LIMIT ${limitNum}`
+    );
+
+    res.json({
+      success: true,
+      data: testimonials
+    });
+  } catch (error) {
+    console.error('Get featured testimonials error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error saat mengambil data testimonial unggulan'
     });
   }
 };
 
 module.exports = {
   getAllTestimonials,
+  getTestimonialById,
   createTestimonial,
   updateTestimonial,
-  deleteTestimonial
+  deleteTestimonial,
+  getFeaturedTestimonials
 };

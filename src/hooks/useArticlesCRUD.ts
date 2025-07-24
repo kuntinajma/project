@@ -1,157 +1,135 @@
-import { useState } from "react";
-import { Article } from "../types";
+import { useState } from 'react';
+import { http } from '../lib/http';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3005/api";
-
-interface CreateArticleData {
+type ArticleCreateData = {
   title: string;
   content: string;
-  excerpt?: string;
+  excerpt?: string | null;
   category: string;
-  featuredImage?: string;
-  status?: "draft" | "pending" | "published" | "rejected";
+  featuredImage?: string | null;
+  tags?: string[] | null;
+  status?: 'draft' | 'pending' | 'published' | 'rejected';
   isFeatured?: boolean;
-  tags?: string[];
-}
+};
 
-interface UpdateArticleData extends CreateArticleData {
-  id: string;
-}
+type ArticleUpdateData = ArticleCreateData;
 
-interface UseArticlesCRUDReturn {
-  loading: boolean;
-  error: string | null;
-  createArticle: (
-    data: CreateArticleData,
-    token: string
-  ) => Promise<{ success: boolean; data?: Article; message?: string }>;
-  updateArticle: (
-    data: UpdateArticleData,
-    token: string
-  ) => Promise<{ success: boolean; data?: Article; message?: string }>;
-  deleteArticle: (
-    id: string,
-    token: string
-  ) => Promise<{ success: boolean; message?: string }>;
-}
+type ArticleResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    authorId: string;
+    authorName?: string;
+    title: string;
+    slug: string;
+    content: string;
+    excerpt: string | null;
+    category: string;
+    featuredImage: string | null;
+    status: 'draft' | 'pending' | 'published' | 'rejected';
+    isFeatured: boolean;
+    viewCount: number;
+    tags: string[];
+    createdAt: string;
+    updatedAt: string;
+    publishedAt: string | null;
+  };
+  errors?: Array<{ msg: string; param: string; location: string }>;
+};
 
-export const useArticlesCRUD = (): UseArticlesCRUDReturn => {
+const useArticlesCRUD = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createArticle = async (data: CreateArticleData, token: string) => {
+  const createArticle = async (articleData: ArticleCreateData) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/articles`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      return {
-        success: true,
-        data: result.data,
-        message: result.message,
+      // Ensure null values are properly sent
+      const sanitizedData = {
+        ...articleData,
+        excerpt: articleData.excerpt || null,
+        featuredImage: articleData.featuredImage || null,
+        tags: articleData.tags || []
       };
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to create article";
-      setError(errorMessage);
+
+      const response = await http<ArticleResponse>('/articles', {
+        method: 'POST',
+        body: sanitizedData,
+      });
+      
+      return {
+        success: response.success,
+        message: response.message,
+        data: response.data,
+      };
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to create article');
       return {
         success: false,
-        message: errorMessage,
+        message: err.response?.message || 'Failed to create article',
+        data: null,
       };
     } finally {
       setLoading(false);
     }
   };
 
-  const updateArticle = async (data: UpdateArticleData, token: string) => {
+  const updateArticle = async (id: string, articleData: ArticleUpdateData) => {
     setLoading(true);
     setError(null);
 
     try {
-      const { id, ...updateData } = data;
-      const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updateData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      return {
-        success: true,
-        data: result.data,
-        message: result.message,
+      // Ensure null values are properly sent
+      const sanitizedData = {
+        ...articleData,
+        excerpt: articleData.excerpt || null,
+        featuredImage: articleData.featuredImage || null,
+        tags: articleData.tags || []
       };
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to update article";
-      setError(errorMessage);
+
+      const response = await http<ArticleResponse>(`/articles/${id}`, {
+        method: 'PUT',
+        body: sanitizedData,
+      });
+      
+      return {
+        success: response.success,
+        message: response.message,
+        data: response.data,
+      };
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to update article');
       return {
         success: false,
-        message: errorMessage,
+        message: err.response?.message || 'Failed to update article',
+        data: null,
       };
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteArticle = async (id: string, token: string) => {
+  const deleteArticle = async (id: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/articles/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await http<{ success: boolean; message: string }>(`/articles/${id}`, {
+        method: 'DELETE',
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
+      
       return {
-        success: true,
-        message: result.message,
+        success: response.success,
+        message: response.message,
       };
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to delete article";
-      setError(errorMessage);
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to delete article');
       return {
         success: false,
-        message: errorMessage,
+        message: err.response?.message || 'Failed to delete article',
       };
     } finally {
       setLoading(false);
@@ -159,11 +137,11 @@ export const useArticlesCRUD = (): UseArticlesCRUDReturn => {
   };
 
   return {
-    loading,
-    error,
     createArticle,
     updateArticle,
     deleteArticle,
+    loading,
+    error,
   };
 };
 

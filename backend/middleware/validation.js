@@ -34,7 +34,9 @@ const validateUser = [
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password minimal 6 karakter"),
-  body("role").optional().isIn(roles).withMessage("Role tidak valid"),
+  body("role")
+    .isIn(roles)
+    .withMessage(`Role harus salah satu dari: ${roles.join(', ')}`),
   body("is_active")
     .optional()
     .isBoolean()
@@ -48,11 +50,26 @@ const validateUserUpdate = [
     .trim()
     .isLength({ min: 2, max: 255 })
     .withMessage("Nama harus 2-255 karakter"),
-  body("role").optional().isIn(roles).withMessage("Role tidak valid"),
+  body("email")
+    .optional()
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("Email tidak valid"),
+  body("role")
+    .optional()
+    .isIn(roles)
+    .withMessage(`Role harus salah satu dari: ${roles.join(', ')}`),
   body("is_active")
     .optional()
     .isBoolean()
     .withMessage("Status aktif tidak valid"),
+  handleValidationErrors,
+];
+
+const validatePasswordChange = [
+  body("password")
+    .isLength({ min: 6 })
+    .withMessage("Password minimal 6 karakter"),
   handleValidationErrors,
 ];
 
@@ -256,15 +273,51 @@ const validateArticle = [
     .trim()
     .isLength({ min: 5, max: 255 })
     .withMessage("Judul harus 5-255 karakter"),
-  body("excerpt")
-    .trim()
-    .isLength({ min: 20, max: 500 })
-    .withMessage("Excerpt harus 20-500 karakter"),
   body("content")
     .trim()
-    .isLength({ min: 100 })
-    .withMessage("Konten minimal 100 karakter"),
-  body("category").isIn(articleCategories).withMessage("Kategori tidak valid"),
+    .isLength({ min: 10 })
+    .withMessage("Konten artikel minimal 10 karakter"),
+  body("category")
+    .trim()
+    .isIn(["tips", "tourism", "culture", "msmes", "environment"])
+    .withMessage("Kategori tidak valid"),
+  body("excerpt")
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage("Ringkasan maksimal 500 karakter"),
+  body("featuredImage")
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === '') return true;
+      // Simple URL validation
+      try {
+        if (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))) {
+          return true;
+        }
+        return false;
+      } catch (e) {
+        return false;
+      }
+    })
+    .withMessage("URL gambar tidak valid"),
+  body("tags")
+    .optional()
+    .custom((value) => {
+      if (value === null || (Array.isArray(value) && value.every(item => typeof item === 'string'))) {
+        return true;
+      }
+      return false;
+    })
+    .withMessage("Tags harus berupa array string atau null"),
+  body("status")
+    .optional()
+    .isIn(["draft", "pending", "published", "rejected"])
+    .withMessage("Status tidak valid"),
+  body("isFeatured")
+    .optional()
+    .isBoolean()
+    .withMessage("isFeatured harus boolean"),
   handleValidationErrors,
 ];
 
@@ -287,6 +340,107 @@ const validatePagination = [
   handleValidationErrors,
 ];
 
+// Contact message validation
+const validateContactMessage = [
+  body("name")
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Nama harus 2-100 karakter"),
+  body("email")
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("Email tidak valid"),
+  body("phone")
+    .optional()
+    .isMobilePhone("id-ID")
+    .withMessage("Nomor telepon tidak valid"),
+  body("subject")
+    .optional()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage("Subject maksimal 200 karakter"),
+  body("message")
+    .trim()
+    .isLength({ min: 10, max: 1000 })
+    .withMessage("Pesan harus 10-1000 karakter"),
+  handleValidationErrors,
+];
+
+const validateContactReply = [
+  body("admin_reply")
+    .trim()
+    .isLength({ min: 10, max: 1000 })
+    .withMessage("Balasan harus 10-1000 karakter"),
+  handleValidationErrors,
+];
+
+// Testimonial validation
+const validateTestimonial = [
+  body("name")
+    .trim()
+    .isLength({ min: 2, max: 255 })
+    .withMessage("Nama harus 2-255 karakter"),
+  body("star")
+    .isInt({ min: 1, max: 5 })
+    .withMessage("Rating bintang harus antara 1-5"),
+  body("origin")
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage("Asal maksimal 255 karakter"),
+  body("message")
+    .trim()
+    .isLength({ min: 10, max: 1000 })
+    .withMessage("Pesan harus 10-1000 karakter"),
+  handleValidationErrors,
+];
+
+// Facility validation
+const validateFacility = [
+  body("icon")
+    .trim()
+    .isLength({ min: 1, max: 10 })
+    .withMessage("Icon harus 1-10 karakter"),
+  body("label")
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Label harus 2-100 karakter"),
+  body("description")
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage("Deskripsi maksimal 255 karakter"),
+  body("available")
+    .optional()
+    .isBoolean()
+    .withMessage("Status ketersediaan harus berupa boolean"),
+  handleValidationErrors,
+];
+
+// Facility update validation (all fields optional)
+const validateFacilityUpdate = [
+  body("icon")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 10 })
+    .withMessage("Icon harus 1-10 karakter"),
+  body("label")
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Label harus 2-100 karakter"),
+  body("description")
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage("Deskripsi maksimal 255 karakter"),
+  body("available")
+    .optional()
+    .isBoolean()
+    .withMessage("Status ketersediaan harus berupa boolean"),
+  handleValidationErrors,
+];
+
 module.exports = {
   validateUser,
   validateUserUpdate,
@@ -299,5 +453,11 @@ module.exports = {
   validateMSME,
   validateId,
   validatePagination,
+  validatePasswordChange,
   handleValidationErrors,
+  validateContactMessage,
+  validateContactReply,
+  validateTestimonial,
+  validateFacility,
+  validateFacilityUpdate,
 };

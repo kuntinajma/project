@@ -1,86 +1,242 @@
-import { useState, useEffect } from "react";
-import { Article } from "../types";
+import { useState, useCallback } from 'react';
+import { http } from '../lib/http';
 
-export interface ArticleQuery {
-  page?: number;
-  limit?: number;
-  search?: string;
-  category?: string;
-  status?: string;
-}
+export type Article = {
+  id: string;
+  authorId: string;
+  authorName?: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string | null;
+  category: string;
+  featuredImage: string | null;
+  status: 'draft' | 'pending' | 'published' | 'rejected';
+  isFeatured: boolean;
+  viewCount: number;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+};
 
-interface UseArticlesReturn {
-  articles: Article[];
-  loading: boolean;
-  error: string | null;
-  pagination?: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
-
-const useArticles = (query: ArticleQuery = {}): UseArticlesReturn => {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] =
-    useState<UseArticlesReturn["pagination"]>();
-
-  useEffect(() => {
-    const fetchArticles = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = new URLSearchParams();
-
-        if (query.page) params.append("page", query.page.toString());
-        if (query.limit) params.append("limit", query.limit.toString());
-        if (query.search) params.append("search", query.search);
-        if (query.category) params.append("category", query.category);
-        if (query.status) params.append("status", query.status);
-
-        const API_BASE_URL =
-          import.meta.env.VITE_API_BASE_URL || "http://localhost:3005/api";
-        const response = await fetch(
-          `${API_BASE_URL}/articles?${params.toString()}`
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch articles: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-          setArticles(data.data?.articles || []);
-          if (data.data?.pagination) {
-            setPagination(data.data.pagination);
-          }
-        } else {
-          throw new Error(data.message || "Failed to fetch articles");
-        }
-      } catch (err) {
-        console.error("Error fetching articles:", err);
-        setError(err instanceof Error ? err.message : "An error occurred");
-        setArticles([]);
-      } finally {
-        setLoading(false);
-      }
+type ArticleResponse = {
+  success: boolean;
+  data: {
+    articles: Article[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      itemsPerPage: number;
     };
-
-    fetchArticles();
-  }, [query.page, query.limit, query.search, query.category, query.status]);
-
-  return {
-    articles,
-    loading,
-    error,
-    pagination,
   };
 };
 
-export default useArticles;
+type ArticleCreateData = {
+  title: string;
+  content: string;
+  excerpt?: string | null;
+  category: string;
+  featuredImage?: string | null;
+  tags?: string[];
+  status?: 'draft' | 'pending' | 'published' | 'rejected';
+  isFeatured?: boolean;
+};
+
+type ArticleUpdateData = ArticleCreateData & {
+  status?: 'draft' | 'pending' | 'published' | 'rejected';
+  isFeatured?: boolean;
+};
+
+// Create a simple cache to prevent redundant API calls
+const cache = new Map<string, {
+  data: {
+    articles: Article[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      itemsPerPage: number;
+    };
+  },
+  timestamp: number
+}>();
+
+// Cache expiration time (5 minutes)
+const CACHE_EXPIRATION = 5 * 60 * 1000;
+
+export const useArticles = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const getArticles = useCallback(async (
+    page = 1,
+    limit = 10,
+    category?: string,
+    search?: string,
+    status?: string,
+    authorId?: string
+  ) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Create a cache key based on the request parameters
+      const cacheKey = `articles_${page}_${limit}_${category || ''}_${search || ''}_${status || ''}_${authorId || ''}`;
+      
+      // Check if we have a valid cache entry
+      const cachedData = cache.get(cacheKey);
+      const now = Date.now();
+      
+      if (cachedData && (now - cachedData.timestamp < CACHE_EXPIRATION)) {
+        setLoading(false);
+        return cachedData.data;
+      }
+      
+      const queryParams: Record<string, string> = {
+        page: String(page),
+        limit: String(limit)
+      };
+      
+      if (category) queryParams.category = category;
+      if (search) queryParams.search = search;
+      if (status) queryParams.status = status;
+      if (authorId) queryParams.author_id = authorId;
+      
+      const response = await http<ArticleResponse>('/articles', {
+        query: queryParams,
+      });
+      
+      const result = {
+        articles: response.data.articles,
+        pagination: response.data.pagination
+      };
+      
+      // Store in cache
+      cache.set(cacheKey, {
+        data: result,
+        timestamp: now
+      });
+      
+      return result;
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to fetch articles');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getArticleById = async (id: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await http<{ success: boolean; data: Article }>(`/articles/${id}`);
+      return response.data;
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to fetch article');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getArticleBySlug = async (slug: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await http<{ success: boolean; data: Article }>(`/articles/slug/${slug}`);
+      return response.data;
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to fetch article');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getFeaturedArticles = async (limit = 5) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await http<{ success: boolean; data: Article[] }>('/articles/featured', {
+        query: { limit: String(limit) },
+      });
+      return response.data;
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to fetch featured articles');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createArticle = async (articleData: ArticleCreateData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await http<{ success: boolean; message: string; data: Article }>('/articles', {
+        method: 'POST',
+        body: articleData,
+      });
+      return response;
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to create article');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateArticle = async (id: string, articleData: ArticleUpdateData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await http<{ success: boolean; message: string; data: Article }>(`/articles/${id}`, {
+        method: 'PUT',
+        body: articleData,
+      });
+      return response;
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to update article');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteArticle = async (id: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await http<{ success: boolean; message: string }>(`/articles/${id}`, {
+        method: 'DELETE',
+      });
+      return response;
+    } catch (err: any) {
+      setError(err.response?.message || 'Failed to delete article');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    loading,
+    error,
+    getArticles,
+    getArticleById,
+    getArticleBySlug,
+    getFeaturedArticles,
+    createArticle,
+    updateArticle,
+    deleteArticle,
+  };
+};

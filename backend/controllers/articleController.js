@@ -251,6 +251,11 @@ const createArticle = async (req, res) => {
     // Set published_at if status is published
     const publishedAt = status === "published" ? new Date() : null;
 
+    // Process tags to ensure it's valid JSON or null
+    const processedTags = Array.isArray(tags) && tags.length > 0 
+      ? JSON.stringify(tags) 
+      : null;
+
     const [result] = await pool.execute(
       `INSERT INTO articles (
         author_id, title, slug, content, excerpt, category, 
@@ -265,8 +270,8 @@ const createArticle = async (req, res) => {
         category,
         featuredImage,
         status,
-        isFeatured,
-        tags.length > 0 ? JSON.stringify(tags) : null,
+        isFeatured ? 1 : 0,
+        processedTags,
         publishedAt,
       ]
     );
@@ -383,6 +388,11 @@ const updateArticle = async (req, res) => {
       publishedAt = null;
     }
 
+    // Process tags to ensure it's valid JSON or null
+    const processedTags = Array.isArray(tags) && tags.length > 0 
+      ? JSON.stringify(tags) 
+      : null;
+
     await pool.execute(
       `UPDATE articles SET 
         title = ?, slug = ?, content = ?, excerpt = ?, category = ?, 
@@ -396,8 +406,8 @@ const updateArticle = async (req, res) => {
         category,
         featuredImage,
         status,
-        isFeatured,
-        tags.length > 0 ? JSON.stringify(tags) : null,
+        isFeatured ? 1 : 0,
+        processedTags,
         publishedAt,
         id,
       ]

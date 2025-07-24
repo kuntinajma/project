@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Filter, Calendar, User, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Article } from "../types";
-import useArticles, { ArticleQuery } from "../hooks/useArticles";
+import { useArticles, Article } from "../hooks/useArticles";
 
 interface ArticlesPageProps {
   onNavigate: (page: string) => void;
@@ -12,17 +11,22 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const [prevArticles, setPrevArticles] = useState<Article[]>([]);
-
-  const [query, setQuery] = useState<ArticleQuery>({
-    page: 1,
-    limit: 12,
-    search: "",
-    category: undefined,
-    status: "published", // Only show published articles on landing page
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(12);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: limit
   });
 
-  const { articles, loading, error } = useArticles(query);
+  const {
+    getArticles,
+    loading: fetchLoading,
+    error: fetchError
+  } = useArticles();
 
   const filters = [
     { id: "all", label: "All Articles", icon: "📰" },
@@ -33,36 +37,43 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
     { id: "environment", label: "Environment", icon: "🌱" },
   ];
 
+  // Fetch articles when component mounts or when filters/search change
   useEffect(() => {
-    if (articles.length > 0) {
-      setPrevArticles(articles);
-    }
-  }, [articles]);
+    const fetchArticles = async () => {
+      setLoading(true);
+      try {
+        const category = activeFilter === "all" ? undefined : activeFilter;
+        const response = await getArticles(
+          page,
+          limit,
+          category,
+          searchTerm || undefined,
+          "published" // Only show published articles on landing page
+        );
+        setArticles(response.articles);
+        setPagination(response.pagination);
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchArticles();
+  }, [page, limit, activeFilter, searchTerm, getArticles]);
+
+  // Debounce search input
   useEffect(() => {
-    if (searchTerm === query.search) return;
-
     const handler = setTimeout(() => {
-      setQuery((prev) => ({
-        ...prev,
-        search: searchTerm,
-        page: 1,
-      }));
+      // Search is handled in the fetchArticles effect
     }, 400); // debounce delay
 
     return () => clearTimeout(handler);
-  }, [searchTerm, query.search]);
-
-  // Use previous data while loading
-  const displayArticles = loading ? prevArticles : articles;
+  }, [searchTerm]);
 
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
-    setQuery((prev) => ({
-      ...prev,
-      category: filter === "all" ? undefined : filter,
-      page: 1,
-    }));
+    setPage(1); // Reset to first page when filter changes
   };
 
   const handleViewArticle = (article: Article) => {
@@ -81,6 +92,7 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
     });
   };
 
+  // Fix for the excerpt and featuredImage null values
   if (selectedArticle) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -94,86 +106,47 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
           </button>
 
           <article className="overflow-hidden bg-white rounded-lg shadow-lg">
-            <img
-              src={selectedArticle.featuredImage}
-              alt={selectedArticle.title}
-              className="object-cover w-full h-64 md:h-96"
-            />
+            {selectedArticle.featuredImage && (
+              <img
+                src={selectedArticle.featuredImage}
+                alt={selectedArticle.title}
+                className="object-cover w-full h-64 md:h-96"
+              />
+            )}
 
-            <div className="p-8">
-              <div className="flex items-center mb-4 space-x-4">
-                <span className="px-3 py-1 text-sm font-medium text-orange-800 bg-orange-100 rounded-full">
-                  {selectedArticle.category}
-                </span>
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <Calendar size={16} />
-                  <span className="text-sm">
-                    {formatDate(selectedArticle.publishedAt)}
-                  </span>
-                </div>
-              </div>
-
-              <h1 className="mb-4 text-4xl font-bold text-gray-900">
+            <div className="p-6">
+              <h1 className="mb-4 text-3xl font-bold text-gray-900">
                 {selectedArticle.title}
               </h1>
 
-              <div className="flex items-center mb-6 space-x-3">
-                <div className="flex justify-center items-center w-10 h-10 font-bold text-white bg-gradient-to-r from-orange-400 to-blue-400 rounded-full">
-                  {selectedArticle.authorName.charAt(0)}
+              <div className="flex flex-wrap items-center mb-6 space-x-4 text-sm text-gray-500">
+                <div className="flex items-center">
+                  <User size={16} className="mr-1" />
+                  <span>{selectedArticle.authorName || 'Unknown Author'}</span>
                 </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <User size={16} className="text-gray-600" />
-                    <span className="font-medium text-gray-900">
-                      {selectedArticle.authorName}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600">Travel Writer</p>
+                <div className="flex items-center">
+                  <Calendar size={16} className="mr-1" />
+                  <span>
+                    {selectedArticle.publishedAt
+                      ? formatDate(selectedArticle.publishedAt)
+                      : 'Unpublished'}
+                  </span>
+                </div>
+                <div className="px-2 py-1 mt-2 text-xs text-blue-800 bg-blue-100 rounded-full sm:mt-0">
+                  {selectedArticle.category}
                 </div>
               </div>
 
-              <div className="max-w-none prose">
-                <p className="mb-6 text-xl font-light leading-relaxed text-gray-600">
+              {selectedArticle.excerpt && (
+                <div className="p-4 mb-6 italic bg-gray-50 rounded-md">
                   {selectedArticle.excerpt}
-                </p>
-
-                <div className="leading-relaxed text-gray-700">
-                  {selectedArticle.content
-                    .split("\n")
-                    .map((paragraph, index) => (
-                      <p key={index} className="mb-4">
-                        {paragraph}
-                      </p>
-                    ))}
                 </div>
-              </div>
+              )}
 
-              <div className="pt-6 mt-8 border-t">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm text-gray-600">
-                      Share this article:
-                    </span>
-                    <div className="flex space-x-2">
-                      <button className="text-blue-600 hover:text-blue-700">
-                        Facebook
-                      </button>
-                      <button className="text-blue-400 hover:text-blue-500">
-                        Twitter
-                      </button>
-                      <button className="text-blue-700 hover:text-blue-800">
-                        LinkedIn
-                      </button>
-                    </div>
-                  </div>
-                  <Link
-                    to="/kontak#contribute"
-                    className="font-medium text-orange-600 hover:text-orange-700"
-                  >
-                    Contact Author
-                  </Link>
-                </div>
-              </div>
+              <div
+                className="prose max-w-none"
+                dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+              />
             </div>
           </article>
         </div>
@@ -240,16 +213,16 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
         )}
 
         {/* Error State */}
-        {error && (
+        {fetchError && (
           <div className="py-12 text-center">
-            <p className="text-red-600">Error: {error}</p>
+            <p className="text-red-600">Error: {fetchError}</p>
           </div>
         )}
 
         {/* Articles Grid */}
-        {!loading && !error && (
+        {!loading && !fetchError && (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {displayArticles.map((article: Article) => (
+            {articles.map((article: Article) => (
               <div
                 key={article.id}
                 className="overflow-hidden bg-white rounded-lg shadow-lg transition-shadow hover:shadow-xl"
@@ -302,7 +275,7 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
         )}
 
         {/* No Results */}
-        {!loading && !error && displayArticles.length === 0 && (
+        {!loading && !fetchError && articles.length === 0 && (
           <div className="py-12 text-center">
             <p className="text-lg text-gray-500">
               No articles found matching your search criteria.
