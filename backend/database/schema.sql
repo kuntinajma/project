@@ -11,6 +11,10 @@ DROP TABLE IF EXISTS users;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- USERS TABLE
+-- Aktifkan kembali pemeriksaan foreign key
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- USERS TABLE
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -48,6 +52,7 @@ CREATE TABLE tour_packages (
   max_persons INT,
   whatsapp_contact VARCHAR(20) NULL,
   whatsapp_booking_url VARCHAR(500) NULL,
+  whatsapp_booking_url VARCHAR(500) NULL,
   facilities TEXT NULL, -- JSON array
   image VARCHAR(255) NULL,
   popular BOOLEAN DEFAULT FALSE,
@@ -62,6 +67,7 @@ CREATE TABLE cultures (
   description TEXT NULL,
   image VARCHAR(255) NULL,
   category VARCHAR(255),
+  gallery TEXT NULL, -- JSON array
   gallery TEXT NULL, -- JSON array
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -92,6 +98,7 @@ CREATE TABLE products (
   durability VARCHAR(255) NOT NULL,
   delivery_time VARCHAR(255) NOT NULL,
   msme_id INT NOT NULL,
+  related_products TEXT NULL, -- JSON array
   related_products TEXT NULL, -- JSON array
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
