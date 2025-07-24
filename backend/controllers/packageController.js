@@ -11,7 +11,7 @@ function formatTourPackage(row) {
     maxPersons: row.max_persons ?? null,
     whatsappContact: row.whatsapp_contact,
     whatsappBookingUrl: row.whatsapp_booking_url ?? null,
-    image: row.image ?? null,
+    image: row.image ?? row.featured_image ?? row.image_url ?? null, // Handle multiple possible field names
     facilities: row.facilities ? JSON.parse(row.facilities) : [],
     popular: !!row.popular,
   };

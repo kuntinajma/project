@@ -123,9 +123,11 @@ const TourPackagesPage: React.FC<TourPackagesPageProps> = ({ onNavigate }) => {
               <div className="relative">
                 <img
                   src={
-                    pkg.image.includes("http")
+                    pkg.image && pkg.image.includes("http")
                       ? pkg.image
-                      : `http://localhost:3005/api/files/upload/${pkg.image}`
+                      : pkg.image
+                      ? `http://localhost:3005/api/files/upload/${pkg.image}`
+                      : "https://images.pexels.com/photos/1430676/pexels-photo-1430676.jpeg?auto=compress&cs=tinysrgb&w=800"
                   }
                   alt={pkg.name}
                   className="object-cover w-full h-64"

@@ -1,16 +1,18 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect } from "react";
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   MagnifyingGlassIcon,
   EyeIcon,
+  CubeIcon,
   ClockIcon,
   UsersIcon,
   CurrencyDollarIcon,
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
 import Toast from "../../components/common/Toast";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../hooks/useToast";
@@ -21,7 +23,7 @@ import { useUploadFiles } from "../../hooks/useUploadFiles";
 import { TourPackage } from "../../types";
 
 const TourPackages: React.FC = () => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<TourPackage | null>(
@@ -46,7 +48,7 @@ const TourPackages: React.FC = () => {
     image: "",
     popular: false,
     whatsappContact: "",
-    whatsappBookingUrl: "",
+    whatsappBookingUrl: "", // ADD THIS FIELD
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [facilitiesText, setFacilitiesText] = useState("");
@@ -72,7 +74,7 @@ const TourPackages: React.FC = () => {
   } = useTourPackagesCRUD();
   const { uploadFiles, uploading: uploadLoading } = useUploadFiles();
 
-  // Use previous data while loading to prevent UI flicker
+  // Use previous data while loading
   useEffect(() => {
     if (packages.length > 0) {
       setPrevPackages(packages);
@@ -96,6 +98,8 @@ const TourPackages: React.FC = () => {
 
   // Use previous data while loading
   const displayPackages = packagesLoading ? prevPackages : packages;
+
+  const filteredPackages = displayPackages;
 
   const handleAddPackage = () => {
     setSelectedPackage(null);
@@ -182,11 +186,7 @@ const TourPackages: React.FC = () => {
 
       // Upload image if file is selected
       if (imageFile) {
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(imageFile);
-        const fileList = dataTransfer.files;
-
-        const uploadedUrls = await uploadFiles(fileList);
+        const uploadedUrls = await uploadFiles([imageFile]);
         if (uploadedUrls.length > 0) {
           image = uploadedUrls[0];
         }
@@ -218,6 +218,22 @@ const TourPackages: React.FC = () => {
         const action = selectedPackage ? "diperbarui" : "dibuat";
         showToast("success", `Paket wisata berhasil ${action}`);
         setIsModalOpen(false);
+        setSelectedPackage(null);
+        setFormData({
+          name: "",
+          price: 0,
+          facilities: [],
+          duration: "",
+          minPersons: 1,
+          maxPersons: 10,
+          description: "",
+          image: "",
+          popular: false,
+          whatsappContact: "",
+          whatsappBookingUrl: "",
+        });
+        setFacilitiesText("");
+        setImageFile(null);
         // Refresh packages list
         setQuery((prev) => ({ ...prev }));
       } else {
@@ -229,12 +245,30 @@ const TourPackages: React.FC = () => {
     }
   };
 
+  const handleToggleStatus = (pkg: any) => {
+    const newStatus = pkg.status === "active" ? "inactive" : "active";
+    showToast(
+      "success",
+      `Status paket ${pkg.name} berhasil diubah menjadi ${newStatus}`
+    );
+  };
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "inactive":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   return (
@@ -269,24 +303,20 @@ const TourPackages: React.FC = () => {
         </div>
       </div>
 
-      {/* Loading and Error States */}
-      {packagesLoading && displayPackages.length === 0 && (
-        <p>Loading packages...</p>
-      )}
-      {packagesError && <p>Error loading packages: {packagesError.message}</p>}
-
       {/* Packages Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {displayPackages.map((pkg) => (
+        {filteredPackages.map((pkg) => (
           <div
             key={pkg.id}
             className="overflow-hidden bg-white rounded-lg shadow-md"
           >
             <img
               src={
-                pkg.image?.includes("http")
+                pkg.image && pkg.image.includes("http")
                   ? pkg.image
-                  : `http://localhost:3005/api/files/upload/${pkg.image}`
+                  : pkg.image
+                  ? `http://localhost:3005/api/files/upload/${pkg.image}`
+                  : "https://images.pexels.com/photos/1430676/pexels-photo-1430676.jpeg?auto=compress&cs=tinysrgb&w=800"
               }
               alt={pkg.name}
               className="object-cover w-full h-48"
@@ -357,11 +387,7 @@ const TourPackages: React.FC = () => {
 
       {/* Add/Edit Package Modal */}
       <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsModalOpen(false)}
-        >
+        <Dialog as="div" className="relative z-10" onClose={setIsModalOpen}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -402,7 +428,6 @@ const TourPackages: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        required
                         value={formData.name}
                         onChange={(e) =>
                           handleFormChange("name", e.target.value)
@@ -417,7 +442,6 @@ const TourPackages: React.FC = () => {
                       </label>
                       <textarea
                         rows={3}
-                        required
                         value={formData.description}
                         onChange={(e) =>
                           handleFormChange("description", e.target.value)
@@ -433,7 +457,6 @@ const TourPackages: React.FC = () => {
                         </label>
                         <input
                           type="number"
-                          required
                           value={formData.price}
                           onChange={(e) =>
                             handleFormChange(
@@ -450,7 +473,6 @@ const TourPackages: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          required
                           value={formData.duration}
                           onChange={(e) =>
                             handleFormChange("duration", e.target.value)
@@ -468,7 +490,6 @@ const TourPackages: React.FC = () => {
                         </label>
                         <input
                           type="number"
-                          required
                           value={formData.minPersons}
                           onChange={(e) =>
                             handleFormChange(
@@ -485,7 +506,6 @@ const TourPackages: React.FC = () => {
                         </label>
                         <input
                           type="number"
-                          required
                           value={formData.maxPersons}
                           onChange={(e) =>
                             handleFormChange(
@@ -527,7 +547,7 @@ const TourPackages: React.FC = () => {
                         className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                       <p className="mt-1 text-xs text-gray-500">
-                        URL WhatsApp dengan pesan booking otomatis.
+                        URL WhatsApp dengan pesan booking otomatis
                       </p>
                     </div>
 
@@ -546,7 +566,7 @@ const TourPackages: React.FC = () => {
 
                     <div>
                       <label className="block mb-1 text-sm font-medium text-gray-700">
-                        Package Image
+                        Image URL
                       </label>
                       <div className="flex items-center space-x-4">
                         <div className="flex justify-center items-center w-20 h-20 bg-gray-200 rounded-lg">
@@ -568,10 +588,35 @@ const TourPackages: React.FC = () => {
                       </div>
                     </div>
 
+                    <div>
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
+                        Gallery Images
+                      </label>
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        {[1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="flex justify-center items-center bg-gray-200 rounded-lg aspect-square"
+                          >
+                            <PhotoIcon className="w-8 h-8 text-gray-400" />
+                          </div>
+                        ))}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Select multiple images for gallery
+                      </p>
+                    </div>
+
                     <div className="flex items-center">
                       <input
-                        id="popular"
                         type="checkbox"
+                        id="popular"
                         checked={formData.popular}
                         onChange={(e) =>
                           handleFormChange("popular", e.target.checked)
@@ -596,14 +641,9 @@ const TourPackages: React.FC = () => {
                       </button>
                       <button
                         type="submit"
-                        disabled={crudLoading || uploadLoading}
-                        className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
                       >
-                        {crudLoading || uploadLoading
-                          ? "Saving..."
-                          : selectedPackage
-                          ? "Update"
-                          : "Create"}
+                        {selectedPackage ? "Update" : "Create"}
                       </button>
                     </div>
                   </form>
@@ -620,8 +660,10 @@ const TourPackages: React.FC = () => {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDeletePackage}
         title="Hapus Paket Wisata"
-        message={`Apakah Anda yakin ingin menghapus paket wisata "${packageToDelete?.name}"? Tindakan ini tidak dapat dibatalkan.`}
+        message={`Apakah Anda yakin ingin menghapus paket wisata ${packageToDelete?.name}? Tindakan ini tidak dapat dibatalkan.`}
         confirmText="Hapus"
+        cancelText="Batal"
+        type="danger"
       />
 
       {/* Toast Notification */}

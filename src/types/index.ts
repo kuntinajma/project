@@ -55,6 +55,7 @@ export interface MSMEProduct {
   price: number;
   image: string;
   description: string;
+  category?: string;
   material: string;
   durability: string;
   deliveryTime: string;

@@ -762,7 +762,6 @@ const Articles: React.FC = () => {
                         </div>
                       </div>
                     </div>
-
                     <div className="flex justify-end pt-4 space-x-3">
                       <button
                         type="button"
@@ -774,10 +773,16 @@ const Articles: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          handleFormChange("status", "draft");
-                          handleSubmitArticle(new Event('click') as any);
+                          setFormData((prev) => ({ ...prev, status: "draft" }));
+                          setTimeout(() => {
+                            const form = document.querySelector("form");
+                            if (form) {
+                              form.requestSubmit();
+                            }
+                          }, 0);
                         }}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                        disabled={crudLoading || uploadLoading}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50"
                       >
                         Save as Draft
                       </button>
