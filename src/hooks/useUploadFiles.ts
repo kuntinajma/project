@@ -26,7 +26,9 @@ export function useUploadFiles() {
     setError(null);
 
     const formData = new FormData();
-    Array.from(files).forEach((file) => {
+    // Handle both FileList and File[] by converting to array
+    const fileArray = Array.isArray(files) ? files : Array.from(files);
+    fileArray.forEach((file) => {
       formData.append("files", file);
     });
 

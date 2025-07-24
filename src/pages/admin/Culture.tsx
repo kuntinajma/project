@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   MagnifyingGlassIcon,
   EyeIcon,
-  SparklesIcon,
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
 import Toast from "../../components/common/Toast";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../hooks/useToast";
@@ -20,7 +18,7 @@ import { useUploadFiles } from "../../hooks/useUploadFiles";
 import { CulturalContent } from "../../types";
 
 const Culture: React.FC = () => {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCulture, setSelectedCulture] =
@@ -33,13 +31,14 @@ const Culture: React.FC = () => {
   const { toast, showToast, hideToast } = useToast();
 
   // Form data state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<CulturalContent, "id">>({
     title: "",
     description: "",
     image: "",
-    category: "dance" as "dance" | "culinary" | "customs" | "wisdom",
-    gallery: [] as string[],
-    videos: [] as string[],
+    category: "dance",
+    gallery: [],
+    videos: [],
+    videoUrl: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<FileList | null>(null);
@@ -66,7 +65,7 @@ const Culture: React.FC = () => {
   } = useCulturesCRUD();
   const { uploadFiles, uploading: uploadLoading } = useUploadFiles();
 
-  // Use previous data while loading
+  // Use previous data while loading to prevent UI flicker
   useEffect(() => {
     if (cultures.length > 0) {
       setPrevCultures(cultures);
@@ -88,7 +87,7 @@ const Culture: React.FC = () => {
     return () => clearTimeout(handler);
   }, [searchTerm, query.search]);
 
-  // Update query when filters change
+  // Update query when category filter changes
   useEffect(() => {
     setQuery((prev) => ({
       ...prev,
@@ -97,10 +96,7 @@ const Culture: React.FC = () => {
     }));
   }, [filterCategory]);
 
-  // Use previous data while loading
   const displayCultures = culturesLoading ? prevCultures : cultures;
-
-  const filteredCultures = displayCultures;
 
   const handleAddCulture = () => {
     setSelectedCulture(null);
@@ -111,6 +107,7 @@ const Culture: React.FC = () => {
       category: "dance",
       gallery: [],
       videos: [],
+      videoUrl: "",
     });
     setImageFile(null);
     setGalleryFiles(null);
@@ -126,6 +123,7 @@ const Culture: React.FC = () => {
       category: culture.category,
       gallery: culture.gallery || [],
       videos: culture.videos || [],
+      videoUrl: culture.videoUrl || "",
     });
     setImageFile(null);
     setGalleryFiles(null);
@@ -137,7 +135,10 @@ const Culture: React.FC = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleFormChange = (field: string, value: any) => {
+  const handleFormChange = (
+    field: keyof typeof formData,
+    value: any
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -154,8 +155,7 @@ const Culture: React.FC = () => {
           "success",
           `Budaya ${cultureToDelete.title} berhasil dihapus`
         );
-        // Refresh cultures list
-        setQuery((prev) => ({ ...prev }));
+        setQuery((prev) => ({ ...prev })); // Refresh list
       } else {
         showToast("error", result.message || "Gagal menghapus budaya");
       }
@@ -174,31 +174,25 @@ const Culture: React.FC = () => {
 
     try {
       let image = formData.image;
-      let gallery = [...formData.gallery];
+      let gallery = [...(formData.gallery || [])];
 
-      // Upload main image if file is selected
+      // Upload main image if a new file is selected
       if (imageFile) {
-        const fileList = new FileList();
-        Object.defineProperty(fileList, "0", { value: imageFile });
-        Object.defineProperty(fileList, "length", { value: 1 });
-
-        const uploadedUrls = await uploadFiles(fileList);
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(imageFile);
+        const uploadedUrls = await uploadFiles(dataTransfer.files);
         if (uploadedUrls.length > 0) {
           image = uploadedUrls[0];
         }
       }
 
-      // Upload gallery images if files are selected
+      // Upload gallery images if new files are selected
       if (galleryFiles && galleryFiles.length > 0) {
         const uploadedGalleryUrls = await uploadFiles(galleryFiles);
         gallery = [...gallery, ...uploadedGalleryUrls];
       }
 
-      const cultureData = {
-        ...formData,
-        image,
-        gallery,
-      };
+      const cultureData = { ...formData, image, gallery };
 
       let result;
       if (selectedCulture) {
@@ -214,19 +208,7 @@ const Culture: React.FC = () => {
         const action = selectedCulture ? "diperbarui" : "dibuat";
         showToast("success", `Budaya berhasil ${action}`);
         setIsModalOpen(false);
-        setSelectedCulture(null);
-        setFormData({
-          title: "",
-          description: "",
-          image: "",
-          category: "dance",
-          gallery: [],
-          videos: [],
-        });
-        setImageFile(null);
-        setGalleryFiles(null);
-        // Refresh cultures list
-        setQuery((prev) => ({ ...prev }));
+        setQuery((prev) => ({ ...prev })); // Refresh list
       } else {
         showToast("error", result.message || "Gagal menyimpan budaya");
       }
@@ -235,6 +217,7 @@ const Culture: React.FC = () => {
       showToast("error", "Terjadi kesalahan saat menyimpan budaya");
     }
   };
+
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "dance":
@@ -285,7 +268,6 @@ const Culture: React.FC = () => {
               />
             </div>
           </div>
-
           <div className="flex items-center space-x-4">
             <select
               value={filterCategory}
@@ -302,9 +284,17 @@ const Culture: React.FC = () => {
         </div>
       </div>
 
+      {/* Loading and Error States */}
+      {culturesLoading && displayCultures.length === 0 && (
+        <p>Loading cultures...</p>
+      )}
+      {culturesError && (
+        <p>Error loading cultures: {culturesError.message}</p>
+      )}
+
       {/* Culture Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCultures.map((culture) => (
+        {displayCultures.map((culture) => (
           <div
             key={culture.id}
             className="bg-white rounded-lg shadow-md overflow-hidden"
@@ -319,16 +309,6 @@ const Culture: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900">
                   {culture.title}
                 </h3>
-                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                  Published
-                </span>
-              </div>
-
-              <p className="text-gray-600 text-sm mb-3">
-                {culture.description}
-              </p>
-
-              <div className="flex items-center justify-between mb-4">
                 <span
                   className={`px-2 py-1 text-xs rounded-full ${getCategoryColor(
                     culture.category
@@ -337,7 +317,9 @@ const Culture: React.FC = () => {
                   {culture.category}
                 </span>
               </div>
-
+              <p className="text-gray-600 text-sm mb-3">
+                {culture.description}
+              </p>
               <div className="flex space-x-2">
                 <button className="flex items-center justify-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors">
                   <EyeIcon className="h-4 w-4 inline mr-1" />
@@ -365,7 +347,11 @@ const Culture: React.FC = () => {
 
       {/* Add/Edit Culture Modal */}
       <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={setIsModalOpen}>
+        <Dialog
+          as="div"
+          className="relative z-10"
+          onClose={() => setIsModalOpen(false)}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -404,6 +390,7 @@ const Culture: React.FC = () => {
                       </label>
                       <input
                         type="text"
+                        required
                         value={formData.title}
                         onChange={(e) =>
                           handleFormChange("title", e.target.value)
@@ -411,15 +398,18 @@ const Culture: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Category
                       </label>
                       <select
+                        required
                         value={formData.category}
                         onChange={(e) =>
-                          handleFormChange("category", e.target.value)
+                          handleFormChange(
+                            "category",
+                            e.target.value as CulturalContent["category"]
+                          )
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       >
@@ -429,13 +419,13 @@ const Culture: React.FC = () => {
                         <option value="wisdom">Local Wisdom</option>
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Description
                       </label>
                       <textarea
                         rows={4}
+                        required
                         value={formData.description}
                         onChange={(e) =>
                           handleFormChange("description", e.target.value)
@@ -443,10 +433,9 @@ const Culture: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Image URL
+                        Main Image
                       </label>
                       <div className="flex items-center space-x-4">
                         <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -456,6 +445,9 @@ const Culture: React.FC = () => {
                           <input
                             type="file"
                             accept="image/*"
+                            onChange={(e) =>
+                              setImageFile(e.target.files?.[0] || null)
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                           />
                           <p className="text-xs text-gray-500 mt-1">
@@ -464,7 +456,6 @@ const Culture: React.FC = () => {
                         </div>
                       </div>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         YouTube Video URL (Optional)
@@ -472,27 +463,17 @@ const Culture: React.FC = () => {
                       <input
                         type="url"
                         placeholder="https://www.youtube.com/watch?v=..."
+                        value={formData.videoUrl}
+                        onChange={(e) =>
+                          handleFormChange("videoUrl", e.target.value)
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        YouTube video URL untuk konten budaya
-                      </p>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Gallery Images
                       </label>
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        {[1, 2, 3].map((i) => (
-                          <div
-                            key={i}
-                            className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center"
-                          >
-                            <PhotoIcon className="h-8 w-8 text-gray-400" />
-                          </div>
-                        ))}
-                      </div>
                       <input
                         type="file"
                         accept="image/*"
@@ -501,10 +482,9 @@ const Culture: React.FC = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Select multiple images for gallery
+                        Select multiple images for the gallery.
                       </p>
                     </div>
-
                     <div className="flex justify-end space-x-3 pt-4">
                       <button
                         type="button"
@@ -515,9 +495,14 @@ const Culture: React.FC = () => {
                       </button>
                       <button
                         type="submit"
-                        className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700"
+                        disabled={crudLoading || uploadLoading}
+                        className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50"
                       >
-                        {selectedCulture ? "Update" : "Create"}
+                        {crudLoading || uploadLoading
+                          ? "Saving..."
+                          : selectedCulture
+                          ? "Update"
+                          : "Create"}
                       </button>
                     </div>
                   </form>
@@ -534,10 +519,8 @@ const Culture: React.FC = () => {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDeleteCulture}
         title="Hapus Budaya"
-        message={`Apakah Anda yakin ingin menghapus budaya ${cultureToDelete?.title}? Tindakan ini tidak dapat dibatalkan.`}
+        message={`Apakah Anda yakin ingin menghapus budaya "${cultureToDelete?.title}"? Tindakan ini tidak dapat dibatalkan.`}
         confirmText="Hapus"
-        cancelText="Batal"
-        type="danger"
       />
 
       {/* Toast Notification */}

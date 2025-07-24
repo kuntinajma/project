@@ -1,6 +1,20 @@
--- USERS TABLE
+-- DROP TABLE dalam urutan yang aman (anak ke parent)
+DROP TABLE IF EXISTS articles;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS msmes;
+DROP TABLE IF EXISTS cultures;
+DROP TABLE IF EXISTS tour_packages;
+DROP TABLE IF EXISTS destinations;
 DROP TABLE IF EXISTS users;
 
+-- Aktifkan kembali pemeriksaan foreign key
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- USERS TABLE
+-- Aktifkan kembali pemeriksaan foreign key
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- USERS TABLE
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -13,8 +27,6 @@ CREATE TABLE users (
 );
 
 -- DESTINATIONS
-DROP TABLE IF EXISTS destinations;
-
 CREATE TABLE destinations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
@@ -30,8 +42,6 @@ CREATE TABLE destinations (
 );
 
 -- TOUR PACKAGES
-DROP TABLE IF EXISTS tour_packages;
-
 CREATE TABLE tour_packages (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -41,6 +51,8 @@ CREATE TABLE tour_packages (
   min_persons INT,
   max_persons INT,
   whatsapp_contact VARCHAR(20) NULL,
+  whatsapp_booking_url VARCHAR(500) NULL,
+  whatsapp_booking_url VARCHAR(500) NULL,
   facilities TEXT NULL, -- JSON array
   image VARCHAR(255) NULL,
   popular BOOLEAN DEFAULT FALSE,
@@ -49,23 +61,19 @@ CREATE TABLE tour_packages (
 );
 
 -- CULTURES
-DROP TABLE IF EXISTS cultures;
-
 CREATE TABLE cultures (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(100) NOT NULL,
   description TEXT NULL,
   image VARCHAR(255) NULL,
   category VARCHAR(255),
-  gallery TEXT NULL,-- JSON array
+  gallery TEXT NULL, -- JSON array
+  gallery TEXT NULL, -- JSON array
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-
 -- MSMES
-DROP TABLE IF EXISTS msmes;
-
 CREATE TABLE msmes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   brand VARCHAR(255) NOT NULL,
@@ -80,8 +88,6 @@ CREATE TABLE msmes (
 );
 
 -- PRODUCTS
-DROP TABLE IF EXISTS products;
-
 CREATE TABLE products (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -92,14 +98,13 @@ CREATE TABLE products (
   durability VARCHAR(255) NOT NULL,
   delivery_time VARCHAR(255) NOT NULL,
   msme_id INT NOT NULL,
-  related_products TEXT NULL, -- JSON array of product IDs
+  related_products TEXT NULL, -- JSON array
+  related_products TEXT NULL, -- JSON array
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- ARTICLES
-DROP TABLE IF EXISTS articles;
-
 CREATE TABLE articles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   author_id INT NOT NULL,

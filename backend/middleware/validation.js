@@ -159,6 +159,10 @@ const validateTourPackage = [
   body("whatsappContact")
     .isMobilePhone("id-ID")
     .withMessage("Nomor WhatsApp tidak valid"),
+  body("whatsappBookingUrl")
+    .optional()
+    .isURL()
+    .withMessage("URL WhatsApp booking tidak valid"),
   body("facilities")
     .isArray({ min: 1 })
     .withMessage("Minimal 1 fasilitas diperlukan"),

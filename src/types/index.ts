@@ -35,6 +35,7 @@ export interface TourPackage {
   image: string;
   popular?: boolean;
   whatsappContact: string;
+  whatsappBookingUrl?: string;
 }
 
 export interface CulturalContent {
@@ -45,6 +46,7 @@ export interface CulturalContent {
   category: "dance" | "culinary" | "customs" | "wisdom";
   gallery: string[];
   videos?: string[];
+  videoUrl?: string;
 }
 
 export interface MSMEProduct {

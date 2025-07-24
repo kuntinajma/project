@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   MagnifyingGlassIcon,
-  EyeIcon,
   CubeIcon,
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
 import Toast from "../../components/common/Toast";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../hooks/useToast";
@@ -93,10 +91,19 @@ const Products: React.FC = () => {
     return () => clearTimeout(handler);
   }, [searchTerm, query.search]);
 
-  // Use previous data while loading
+  // Use previous data while loading to prevent UI flicker
   const displayProducts = productsLoading ? prevProducts : products;
 
   const handleAddProduct = () => {
+    // Check if user has any MSMEs before allowing product creation
+    if (msmes.length === 0) {
+      showToast(
+        "error",
+        "Anda harus membuat MSME terlebih dahulu sebelum menambahkan produk"
+      );
+      return;
+    }
+
     setSelectedProduct(null);
     setFormData({
       name: "",
@@ -152,7 +159,7 @@ const Products: React.FC = () => {
           "success",
           `Product ${productToDelete.name} berhasil dihapus`
         );
-        // Refresh products list
+        // Refresh products list by creating a new query object to trigger the hook
         setQuery((prev) => ({ ...prev }));
       } else {
         showToast("error", result.message || "Gagal menghapus product");
@@ -170,14 +177,19 @@ const Products: React.FC = () => {
     e.preventDefault();
     if (!token) return;
 
+    if (!formData.msme_id) {
+      showToast("error", "Pilih MSME terlebih dahulu");
+      return;
+    }
+
     try {
       let image = formData.image;
 
-      // Upload image if file is selected
       if (imageFile) {
-        const fileList = new FileList();
-        Object.defineProperty(fileList, "0", { value: imageFile });
-        Object.defineProperty(fileList, "length", { value: 1 });
+        // Since useUploadFiles expects a FileList, we create one
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(imageFile);
+        const fileList = dataTransfer.files;
 
         const uploadedUrls = await uploadFiles(fileList);
         if (uploadedUrls.length > 0) {
@@ -185,10 +197,7 @@ const Products: React.FC = () => {
         }
       }
 
-      const productData = {
-        ...formData,
-        image,
-      };
+      const productData = { ...formData, image };
 
       let result;
       if (selectedProduct) {
@@ -204,19 +213,6 @@ const Products: React.FC = () => {
         const action = selectedProduct ? "diperbarui" : "dibuat";
         showToast("success", `Product berhasil ${action}`);
         setIsModalOpen(false);
-        setSelectedProduct(null);
-        setFormData({
-          name: "",
-          price: 0,
-          image: "",
-          description: "",
-          material: "",
-          durability: "",
-          deliveryTime: "",
-          msme_id: "",
-          relatedProducts: [],
-        });
-        setImageFile(null);
         // Refresh products list
         setQuery((prev) => ({ ...prev }));
       } else {
@@ -248,7 +244,13 @@ const Products: React.FC = () => {
         </div>
         <button
           onClick={handleAddProduct}
-          className="flex items-center px-4 py-2 space-x-2 text-white bg-orange-600 rounded-lg transition-colors hover:bg-orange-700"
+          disabled={msmes.length === 0}
+          className={`flex items-center px-4 py-2 space-x-2 rounded-lg transition-colors ${
+            msmes.length === 0
+              ? "text-gray-400 bg-gray-300 cursor-not-allowed"
+              : "text-white bg-orange-600 hover:bg-orange-700"
+          }`}
+          title={msmes.length === 0 ? "Buat MSME terlebih dahulu" : ""}
         >
           <PlusIcon className="w-5 h-5" />
           <span>Add Product</span>
@@ -282,7 +284,7 @@ const Products: React.FC = () => {
       {/* Error State */}
       {productsError && (
         <div className="p-4 mb-6 bg-red-50 rounded-lg border border-red-200">
-          <p className="text-red-600">Error: {productsError.message}</p>
+          <p className="text-red-600">Error: {productsError?.message}</p>
         </div>
       )}
 
