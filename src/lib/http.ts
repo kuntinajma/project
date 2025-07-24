@@ -59,10 +59,15 @@ export async function http<T>(
     headers["Content-Type"] = "application/json";
   }
   
-  // Add authentication token if available
-  const token = localStorage.getItem("token");
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  // Add authentication token if available and not already set
+  if (!headers["authorization"]) {
+    const token = localStorage.getItem("token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+      console.log("Adding token from localStorage to request");
+    }
+  } else {
+    console.log("Authorization header already set in request");
   }
 
   // Handle body
@@ -81,6 +86,8 @@ export async function http<T>(
   let data: T;
 
   try {
+    console.log(`Making ${fetchOptions.method || 'GET'} request to ${fullUrl}`);
+    
     const response = await fetch(fullUrl, {
       ...fetchOptions,
       headers,
@@ -91,6 +98,7 @@ export async function http<T>(
 
     // ❌ Jika tidak OK, throw dengan bawa data
     if (!response.ok) {
+      console.error(`HTTP error ${response.status}: ${JSON.stringify(data)}`);
       const error: any = new Error(`HTTP ${response.status}`);
       error.status = response.status;
       error.response = data;
