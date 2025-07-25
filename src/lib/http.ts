@@ -59,10 +59,15 @@ export async function http<T>(
     headers["Content-Type"] = "application/json";
   }
   
-  // Add authentication token if available
-  const token = localStorage.getItem("token");
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  // Add authentication token if available and not already set
+  if (!headers["authorization"]) {
+    const token = localStorage.getItem("token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+      console.log("Adding token from localStorage to request");
+    }
+  } else {
+    console.log("Authorization header already set in request");
   }
 
   // Handle body
@@ -81,16 +86,40 @@ export async function http<T>(
   let data: T;
 
   try {
+    console.log(`Making ${fetchOptions.method || 'GET'} request to ${fullUrl}`);
+    
     const response = await fetch(fullUrl, {
       ...fetchOptions,
       headers,
       body: finalBody,
     });
 
-    data = await response.json();
+    // Special handling for DELETE requests that might return empty body
+    if (fetchOptions.method === 'DELETE' && response.status === 204) {
+      console.log('DELETE request successful with no content');
+      return { success: true, message: 'Resource deleted successfully' } as T;
+    }
+
+    // Try to parse JSON response
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error('Error parsing JSON response:', jsonError);
+      // If it's a DELETE request and we can't parse JSON but status is OK, return success
+      if (fetchOptions.method === 'DELETE' && response.ok) {
+        return { success: true, message: 'Resource deleted successfully' } as T;
+      }
+      
+      // For other requests or non-OK status, handle as error
+      const error: any = new Error('Invalid JSON response');
+      error.status = response.status;
+      error.response = { success: false, message: 'Server returned invalid JSON' };
+      throw error;
+    }
 
     // ❌ Jika tidak OK, throw dengan bawa data
     if (!response.ok) {
+      console.error(`HTTP error ${response.status}: ${JSON.stringify(data)}`);
       const error: any = new Error(`HTTP ${response.status}`);
       error.status = response.status;
       error.response = data;
@@ -102,7 +131,12 @@ export async function http<T>(
     // Re-throw tapi pastikan error punya .response
     if (err.name === "SyntaxError") {
       err.message = "Network error or invalid JSON";
-      err.response = null;
+      err.response = { success: false, message: "Network error or invalid JSON response" };
+    } else if (!err.response) {
+      err.response = { 
+        success: false, 
+        message: err.message || "Network error occurred" 
+      };
     }
     throw err;
   }

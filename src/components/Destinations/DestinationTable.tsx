@@ -2,6 +2,7 @@ import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from "@tanstack
 import { useMemo } from "react";
 import { Destination } from "../../types";
 import { DestinationQuery } from "../../hooks/useDestinations";
+import { MapPin, Eye, Edit, Trash2, Map } from "lucide-react";
 
 interface Props {
 	data: Destination[];
@@ -25,6 +26,12 @@ export default function DestinationTable({
 	onEdit,
 	onDelete,
 }: Props) {
+	const handleViewOnMap = (destination: Destination) => {
+		const { lat, lng } = destination.location;
+		const mapUrl = `https://www.google.com/maps?q=${lat},${lng}&z=15`;
+		window.open(mapUrl, "_blank");
+	};
+
 	const columns = useMemo<ColumnDef<Destination>[]>(
 		() => [
 			{
@@ -34,10 +41,41 @@ export default function DestinationTable({
 			{
 				header: "Category",
 				accessorKey: "category",
+				cell: ({ row }) => {
+					const category = row.original.category;
+					return (
+						<span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+							{category}
+						</span>
+					);
+				},
+			},
+			{
+				header: "Location",
+				accessorKey: "location",
+				cell: ({ row }) => {
+					const { lat, lng } = row.original.location;
+					return (
+						<div className="flex items-center space-x-1">
+							<MapPin className="h-4 w-4 text-orange-600" />
+							<span className="text-sm">
+								{lat.toFixed(4)}, {lng.toFixed(4)}
+							</span>
+						</div>
+					);
+				},
 			},
 			{
 				header: "Description",
 				accessorKey: "shortDescription",
+				cell: ({ row }) => {
+					const desc = row.original.shortDescription;
+					return (
+						<div className="max-w-xs truncate" title={desc}>
+							{desc}
+						</div>
+					);
+				},
 			},
 			{
 				header: "Actions",
@@ -47,21 +85,31 @@ export default function DestinationTable({
 						<div className="flex gap-2">
 							<button
 								onClick={() => onView(destination)}
-								className="text-blue-600 hover:underline"
+								className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+								title="View Details"
 							>
-								View
+								<Eye className="h-4 w-4" />
+							</button>
+							<button
+								onClick={() => handleViewOnMap(destination)}
+								className="p-1 text-green-600 hover:bg-green-100 rounded"
+								title="View on Map"
+							>
+								<Map className="h-4 w-4" />
 							</button>
 							<button
 								onClick={() => onEdit(destination)}
-								className="text-yellow-600 hover:underline"
+								className="p-1 text-yellow-600 hover:bg-yellow-100 rounded"
+								title="Edit"
 							>
-								Edit
+								<Edit className="h-4 w-4" />
 							</button>
 							<button
 								onClick={() => onDelete(destination)}
-								className="text-red-600 hover:underline"
+								className="p-1 text-red-600 hover:bg-red-100 rounded"
+								title="Delete"
 							>
-								Delete
+								<Trash2 className="h-4 w-4" />
 							</button>
 						</div>
 					);

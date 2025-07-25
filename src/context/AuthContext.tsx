@@ -37,7 +37,7 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const API_BASE_URL = "http://localhost:3005/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3005/api";
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -60,13 +60,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await axios.get(`${API_BASE_URL}/auth/profile`);
+          console.log("Checking auth with token:", token);
+          const response = await axios.get(`${API_BASE_URL}/auth/profile`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
           if (response.data.success) {
             setUser(response.data.data);
+            console.log("Auth successful, user:", response.data.data);
           } else {
+            console.log("Auth failed, clearing token");
             logout();
           }
         } catch (error) {
+          console.error("Auth check error:", error);
           logout();
         }
       }
@@ -92,6 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(userData);
         setToken(tokenData);
         localStorage.setItem("token", tokenData);
+        console.log("Login successful, token set:", tokenData);
         return true;
       }
       return false;
@@ -106,6 +115,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
     localStorage.removeItem("token");
     delete axios.defaults.headers.common["Authorization"];
+    console.log("Logged out, token cleared");
   };
 
   return (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { http } from "../lib/http";
+import { useAuth } from "../context/AuthContext";
 
 interface UploadFileResponse {
   url: string;
@@ -18,6 +19,10 @@ interface UploadFilesResponse {
 export function useUploadFiles() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const { token } = useAuth();
+  
+  const MAX_FILES = 5;
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
   const uploadFiles = async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return [];
@@ -25,33 +30,50 @@ export function useUploadFiles() {
     setUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    // Handle both FileList and File[] by converting to array
-    const fileArray = Array.isArray(files) ? files : Array.from(files);
-    fileArray.forEach((file) => {
-      formData.append("files", file);
-    });
-
     try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_API_BASE_URL || "http://localhost:3005/api"
-        }/files/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
+      // Validate file count
+      if (files.length > MAX_FILES) {
+        throw new Error(`Maksimal ${MAX_FILES} gambar diperbolehkan`);
       }
 
-      const result = (await response.json()) as UploadFilesResponse;
+      // Validate file types and sizes
+      const fileArray = Array.isArray(files) ? files : Array.from(files);
+      
+      // Check for invalid files
+      const invalidFiles = fileArray.filter(file => {
+        const isValidType = file.type.startsWith('image/');
+        const isValidSize = file.size <= MAX_FILE_SIZE;
+        return !isValidType || !isValidSize;
+      });
+      
+      if (invalidFiles.length > 0) {
+        throw new Error('Semua file harus berupa gambar (JPG, PNG) dengan ukuran maksimal 5MB');
+      }
+      
+      // Create FormData with valid files
+      const formData = new FormData();
+      fileArray.forEach((file, index) => {
+        // Use index as part of the field name to ensure server handles them correctly
+        formData.append(`files`, file);
+      });
+
+      console.log(`Uploading ${fileArray.length} files...`);
+
+      // Use the http utility which automatically includes the token
+      const result = await http<UploadFilesResponse>("/files/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      
+      console.log(`Successfully uploaded ${result.files.length} files`);
       setUploading(false);
       return result.files.map((file) => file.filename);
-    } catch (err) {
-      setError(err as Error);
+    } catch (err: any) {
+      console.error("File upload error:", err);
+      setError(err);
       setUploading(false);
       return [];
     }

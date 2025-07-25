@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useNavigate,
+  Navigate,
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -37,6 +38,12 @@ import Profile from "./pages/admin/Profile";
 import ContactMessages from "./pages/admin/ContactMessages";
 import Testimonials from "./pages/admin/Testimonials";
 import Transportation from "./pages/admin/Transportation";
+
+// Define roles with access to admin routes
+const adminRoles = ["superadmin", "admin"];
+const contributorRoles = [...adminRoles, "contributor"];
+const msmeRoles = [...adminRoles, "msme"];
+const allAdminRoles = [...adminRoles, "contributor", "msme"];
 
 function AppWrapper() {
   const navigate = useNavigate();
@@ -97,32 +104,95 @@ function App({ onNavigate }: { onNavigate: (page: string) => void }) {
         />
       </Route>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/unauthorized" element={<div className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-8">
+          <h1 className="text-3xl font-bold text-red-600 mb-4">Akses Ditolak</h1>
+          <p className="mb-4">Anda tidak memiliki izin untuk mengakses halaman ini.</p>
+          <button 
+            onClick={() => window.history.back()}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Kembali
+          </button>
+        </div>
+      </div>} />
 
       {/* Admin Routes */}
       <Route
         path="/admin"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={allAdminRoles}>
             <AdminLayout />
           </ProtectedRoute>
         }
       >
         <Route index element={<Dashboard />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="users" element={<Users />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="destinations" element={<Destinations />} />
-        <Route path="culture" element={<Culture />} />
-        <Route path="packages" element={<TourPackages />} />
-        <Route path="umkm" element={<UMKM />} />
-        <Route path="products" element={<Products />} />
-        <Route path="articles" element={<Articles />} />
-        <Route path="profile-umkm" element={<ProfileUMKM />} />
+        <Route path="users" element={
+          <ProtectedRoute allowedRoles={adminRoles}>
+            <Users />
+          </ProtectedRoute>
+        } />
+        <Route path="settings" element={
+          <ProtectedRoute allowedRoles={adminRoles}>
+            <Settings />
+          </ProtectedRoute>
+        } />
+        <Route path="destinations" element={
+          <ProtectedRoute allowedRoles={contributorRoles}>
+            <Destinations />
+          </ProtectedRoute>
+        } />
+        <Route path="culture" element={
+          <ProtectedRoute allowedRoles={contributorRoles}>
+            <Culture />
+          </ProtectedRoute>
+        } />
+        <Route path="packages" element={
+          <ProtectedRoute allowedRoles={contributorRoles}>
+            <TourPackages />
+          </ProtectedRoute>
+        } />
+        <Route path="umkm" element={
+          <ProtectedRoute allowedRoles={adminRoles}>
+            <UMKM />
+          </ProtectedRoute>
+        } />
+        <Route path="products" element={
+          <ProtectedRoute allowedRoles={[...adminRoles, "msme"]}>
+            <Products />
+          </ProtectedRoute>
+        } />
+        <Route path="articles" element={
+          <ProtectedRoute allowedRoles={contributorRoles}>
+            <Articles />
+          </ProtectedRoute>
+        } />
+        <Route path="profile-umkm" element={
+          <ProtectedRoute allowedRoles={msmeRoles}>
+            <ProfileUMKM />
+          </ProtectedRoute>
+        } />
         <Route path="profile" element={<Profile />} />
-        <Route path="contact-messages" element={<ContactMessages />} />
-        <Route path="testimonials" element={<Testimonials />} />
-        <Route path="transportation" element={<Transportation />} />
+        <Route path="contact-messages" element={
+          <ProtectedRoute allowedRoles={adminRoles}>
+            <ContactMessages />
+          </ProtectedRoute>
+        } />
+        <Route path="testimonials" element={
+          <ProtectedRoute allowedRoles={adminRoles}>
+            <Testimonials />
+          </ProtectedRoute>
+        } />
+        <Route path="transportation" element={
+          <ProtectedRoute allowedRoles={adminRoles}>
+            <Transportation />
+          </ProtectedRoute>
+        } />
       </Route>
+      
+      {/* Catch all route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

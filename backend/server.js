@@ -78,6 +78,7 @@ const testimonialsRoutes = require('./routes/testimonials');
 const articlesRoutes = require('./routes/articles');
 const settingsRoutes = require('./routes/settings');
 const homeRoutes = require('./routes/home');
+const transportationRoutes = require('./routes/transportation');
 
 // Routes - Remove duplicate route registrations
 app.use('/api/users', usersRoutes);
@@ -86,6 +87,7 @@ app.use('/api/testimonials', testimonialsRoutes);
 app.use('/api/articles', articlesRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/home', homeRoutes);
+app.use('/api/transportation', transportationRoutes);
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/destinations", require("./routes/destinations"));
 app.use("/api/packages", require("./routes/packages"));
