@@ -159,11 +159,11 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
       <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900">
-            Travel Articles & Guides
+            Artikel & Panduan Wisata
           </h1>
           <p className="mx-auto max-w-3xl text-xl text-gray-600">
-            Discover insider tips, travel guides, and stories about Laiya Island
-            from experienced travelers and local experts.
+            Temukan tips perjalanan, panduan wisata, dan kisah menarik seputar Pulau Laiya 
+            dari para wisatawan dan komunitas lokal
           </p>
         </div>
 
@@ -286,18 +286,17 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
         {/* Contribute Section */}
         <div className="p-8 mt-12 bg-white rounded-lg shadow-lg">
           <h3 className="mb-4 text-2xl font-bold text-gray-900">
-            Share Your Story
+            Bagikan Ceritamu
           </h3>
           <p className="mb-6 text-gray-600">
-            Have you visited Laiya Island? Share your experiences, tips, and
-            stories with fellow travelers. Your contribution helps build a
-            valuable resource for future visitors.
+            Pernah berkunjung ke Pulau Laiya? Bagikan pengalaman, tips, dan kisah perjalananmu kepada sesama wisatawan. 
+            Kontribusimu akan menjadi sumber inspirasi dan informasi berharga bagi para pengunjung di masa depan.
           </p>
           <Link
             to="/kontak#contribute"
             className="inline-block px-6 py-3 text-white bg-orange-600 rounded-lg transition-colors hover:bg-orange-700"
           >
-            Contribute Article
+            Kirim Artikelmu
           </Link>
         </div>
       </div>

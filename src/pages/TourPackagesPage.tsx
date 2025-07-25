@@ -83,11 +83,11 @@ const TourPackagesPage: React.FC<TourPackagesPageProps> = ({ onNavigate }) => {
       <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <h1 className="mb-4 text-4xl font-bold text-gray-900">
-            Tour Packages
+            Paket Wisata
           </h1>
           <p className="mx-auto max-w-3xl text-xl text-gray-600">
-            Choose from our carefully curated tour packages designed to give you
-            the best experience of Laiya Island and its surrounding attractions.
+            Nikmati pengalaman terbaik di Pulau Laiya dengan paket 
+            wisata pilihan yang telah kami ciptakan khusus untuk Anda
           </p>
 
           <div className="flex flex-row justify-center items-center mt-6">
@@ -132,12 +132,6 @@ const TourPackagesPage: React.FC<TourPackagesPageProps> = ({ onNavigate }) => {
                   alt={pkg.name}
                   className="object-cover w-full h-64"
                 />
-                <div className="absolute top-4 right-4 px-3 py-2 rounded-lg backdrop-blur-sm bg-white/90">
-                  <div className="flex items-center space-x-1">
-                    <Star className="text-yellow-500 fill-current" size={16} />
-                    <span className="text-sm font-medium">4.9</span>
-                  </div>
-                </div>
               </div>
 
               <div className="p-6">
@@ -204,31 +198,29 @@ const TourPackagesPage: React.FC<TourPackagesPageProps> = ({ onNavigate }) => {
 
         <div className="p-8 mt-12 bg-white rounded-lg shadow-lg">
           <h3 className="mb-4 text-2xl font-bold text-gray-900">
-            Booking Information
+            Informasi Pemesanan
           </h3>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <h4 className="mb-2 font-semibold text-gray-900">
-                What's Included:
+                Termasuk dalam Paket:
               </h4>
               <ul className="space-y-1 text-gray-600">
-                <li>• Professional local guide</li>
-                <li>• Transportation to/from accommodation</li>
-                <li>• All entrance fees</li>
-                <li>• Safety equipment</li>
-                <li>• Traditional lunch</li>
+                <li>• Pemandu lokal profesional</li>
+                <li>• Transportasi dari/ke tempat penginapan</li>
+                <li>• Semua biaya masuk lokasi wisata</li>
+                <li>• Peralatan keselamatan</li>
               </ul>
             </div>
             <div>
               <h4 className="mb-2 font-semibold text-gray-900">
-                Important Notes:
+                Catatan Penting:
               </h4>
               <ul className="space-y-1 text-gray-600">
-                <li>• Advance booking recommended</li>
-                <li>• Weather dependent activities</li>
-                <li>• Suitable for all fitness levels</li>
-                <li>• Vegetarian options available</li>
-                <li>• Group discounts available</li>
+                <li>• Disarankan untuk melakukan pemesanan lebih awal</li>
+                <li>• Aktivitas tergantung kondisi cuaca</li>
+                <li>• Diskon untuk rombongan tersedia</li>
+                <li>• Tersedia pilihan menu vegetarian</li>
               </ul>
             </div>
           </div>

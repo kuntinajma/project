@@ -233,15 +233,15 @@ const Users: React.FC = () => {
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-					<p className="text-gray-600">Manage admin, UMKM, and contributor accounts</p>
+					<h1 className="text-3xl font-bold text-gray-900">Manajemen Pengguna</h1>
+					<p className="text-gray-600">Kelola admin, UMKM, and kontributor</p>
 				</div>
 				<button
 					onClick={handleAddUser}
 					className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
 				>
 					<UserPlusIcon className="h-5 w-5" />
-					<span>Add User</span>
+					<span>Tambah Pengguna</span>
 				</button>
 			</div>
 
@@ -372,7 +372,7 @@ const Users: React.FC = () => {
 									currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-700 hover:bg-gray-50'
 								}`}
 							>
-								Previous
+								Sebelumnya
 							</button>
 							<button
 								onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
@@ -381,7 +381,7 @@ const Users: React.FC = () => {
 									currentPage === totalPages ? 'bg-gray-100 text-gray-400' : 'bg-white text-gray-700 hover:bg-gray-50'
 								}`}
 							>
-								Next
+								Selanjutnya
 							</button>
 						</div>
 						<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">

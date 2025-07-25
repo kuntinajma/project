@@ -147,11 +147,10 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Contact Us
+            Hubungi Kami
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Get in touch with us for inquiries, support, or to contribute your own 
-            stories and experiences about Laiya Island.
+            Silakan hubungi kami untuk pertanyaan, dukungan, atau jika Anda ingin membagikan cerita dan pengalaman pribadi tentang Pulau Laiya.
           </p>
         </div>
 
@@ -159,19 +158,18 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Visit Laiya Island</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Kunjungi Laiya Island</h3>
               <p className="text-gray-600 mb-6">
-                Laiya Island is located in the pristine waters of South Sulawesi, 
-                accessible via boat from Bulukumba Harbor. The island offers a 
-                perfect escape from the hustle and bustle of city life.
+                Pulau Laiya terletak di perairan jernih Sulawesi Selatan dan dapat diakses melalui perjalanan laut dari Pelabuhan Bulukumba.
+                Tempat untuk melepas penat dari hiruk-pikuk kehidupan kota dan menikmati keindahan alam yang masih alami.
               </p>
               
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <MapPin className="text-orange-600 mt-1" size={20} />
                   <div>
-                    <h4 className="font-semibold text-gray-900">Location</h4>
-                    <p className="text-gray-600">Laiya Island, South Sulawesi, Indonesia</p>
+                    <h4 className="font-semibold text-gray-900">Lokasi</h4>
+                    <p className="text-gray-600">Pulau Laiya, Kabupaten Pangkejene dan Kepulauan, Provinsi Sulawesi Selatan, Indonesia</p>
                   </div>
                 </div>
                 
@@ -222,7 +220,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Contact Form
+              Pesan
             </button>
             <button
               onClick={() => setActiveTab('contribute')}
@@ -232,7 +230,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Contribute Article
+              Artikel
             </button>
             <button
               onClick={() => setActiveTab('testimonial')}
@@ -242,7 +240,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Submit Testimonial
+              Testimoni
             </button>
             </nav>
           </div>

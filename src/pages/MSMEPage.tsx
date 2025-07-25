@@ -281,12 +281,11 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Local Products & MSMEs
+            Produk Lokal dan UMKM
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Discover authentic handcrafted products from local artisans and
-            small businesses in Laiya Island. Support the community while taking
-            home unique souvenirs.
+            Temukan aneka makanan khas dan produk kerajinan autentik dari pelaku UMKM dan pengrajin lokal di Pulau Laiya.
+            Dukung masyarakat setempat sambil membawa pulang oleh-oleh khas yang unik dan berkesan.
           </p>
 
           <div className="mt-6 flex flex-row items-center justify-center">
@@ -314,12 +313,6 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
                   alt={product.name}
                   className="w-full h-48 object-cover"
                 />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2">
-                  <div className="flex items-center space-x-1">
-                    <Star className="text-yellow-500 fill-current" size={16} />
-                    <span className="text-sm font-medium">4.8</span>
-                  </div>
-                </div>
               </div>
 
               <div className="p-6">
@@ -341,7 +334,7 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
                     onClick={() => handleViewDetails(product)}
                     className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors"
                   >
-                    View Details
+                    Lihat Deatil
                   </button>
                 </div>
               </div>
@@ -351,27 +344,25 @@ const MSMEPage: React.FC<MSMEPageProps> = ({ onNavigate }) => {
 
         <div className="mt-12 bg-white rounded-lg shadow-lg p-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            About Our MSMEs
+            Tentang UMKM Kami
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">
-                Supporting Local Economy
+                Mendukung Ekonomi Lokal
               </h4>
               <p className="text-gray-600">
-                Our MSME partners are local artisans and small business owners
-                who create authentic products using traditional techniques and
-                local materials.
+               Mitra UMKM kami adalah pengrajin lokal dan pelaku usaha kecil yang menghasilkan berbagai produk autentik dengan teknik tradisional 
+               dan bahan-bahan lokal dari Pulau Laiya. Melalui kolaborasi ini, kami berkomitmen untuk memberdayakan komunitas dan menjaga warisan budaya setempat.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">
-                Quality & Authenticity
+                Kualitas & Keaslian
               </h4>
               <p className="text-gray-600">
-                Every product is carefully crafted with attention to detail,
-                ensuring you receive genuine, high-quality items that represent
-                the culture of Laiya Island.
+                Setiap produk dibuat dengan penuh ketelitian dan perhatian pada setiap detailnya. 
+                Kami memastikan Anda mendapatkan barang berkualitas tinggi yang benar-benar mencerminkan budaya dan kearifan lokal Pulau Laiya.
               </p>
             </div>
           </div>

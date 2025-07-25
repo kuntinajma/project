@@ -158,13 +158,11 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
 
               <div className="bg-white rounded-lg p-6 shadow-md">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Cultural Significance
+                  Makna Budaya
                 </h3>
                 <p className="text-gray-600">
-                  This cultural element represents the rich heritage of Laiya
-                  Island and Mattiro Labangeng Village, passed down through
-                  generations and still practiced today as part of the
-                  community's identity.
+                  Unsur budaya ini mencerminkan kekayaan warisan Pulau Laiya dan Desa Mattiro Labangeng yang telah diwariskan 
+                  secara turun-temurun dan masih dilestarikan hingga kini sebagai bagian dari identitas masyarakat setempat.
                 </p>
               </div>
 
@@ -195,12 +193,11 @@ const CulturePage: React.FC<CulturePageProps> = ({ onNavigate }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-6">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Culture & Traditions
+            Budaya & Tradisi
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Immerse yourself in the rich cultural heritage of Laiya Island and
-            Mattiro Labangeng Village, where ancient traditions continue to
-            thrive.
+            Rasakan kekayaan warisan budaya Pulau Laiya dan Desa Mattiro Labangeng, 
+            tempat tradisi leluhur masih hidup dan terus dilestarikan hingga kini.
           </p>
 
           <div className="mt-6 flex flex-row items-center justify-center">
