@@ -1,5 +1,5 @@
 -- ARTICLES
-CREATE TABLE articles (
+CREATE TABLE IF NOT EXISTS articles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   author_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
@@ -18,30 +18,30 @@ CREATE TABLE articles (
   FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- SETTINGS TABLE
+-- SETTINGS
 CREATE TABLE IF NOT EXISTS settings (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   category VARCHAR(50) NOT NULL,
-  key VARCHAR(100) NOT NULL,
+  `key` VARCHAR(100) NOT NULL,
   value TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(category, key)
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE(category, `key`)
 );
 
--- FACILITIES TABLE
+-- FACILITIES
 CREATE TABLE IF NOT EXISTS facilities (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   icon VARCHAR(10) NOT NULL,
   label VARCHAR(100) NOT NULL,
   description VARCHAR(255),
   is_available BOOLEAN DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- INSERT DEFAULT SETTINGS
-INSERT OR IGNORE INTO settings (category, key, value) VALUES
+INSERT IGNORE INTO settings (category, `key`, value) VALUES
   ('general', 'island_name', 'Pulau Laiya'),
   ('general', 'village_name', 'Desa Mattiro Labangeng'),
   ('general', 'description', 'Pulau Laiya adalah destinasi wisata eksotis dengan budaya lokal yang kaya di Desa Mattiro Labangeng, Sulawesi Selatan.'),
@@ -63,7 +63,7 @@ INSERT OR IGNORE INTO settings (category, key, value) VALUES
   ('social', 'twitter', 'https://twitter.com/pulaulaiya');
 
 -- INSERT DEFAULT FACILITIES
-INSERT OR IGNORE INTO facilities (icon, label, description, is_available) VALUES
+INSERT IGNORE INTO facilities (icon, label, description, is_available) VALUES
   ('🚿', 'Kamar Mandi', 'Fasilitas kamar mandi yang bersih', 1),
   ('📶', 'Wi-Fi', 'Akses internet nirkabel gratis', 1),
   ('⚡', 'Listrik', 'Pasokan listrik 24 jam', 1),
@@ -72,7 +72,7 @@ INSERT OR IGNORE INTO facilities (icon, label, description, is_available) VALUES
   ('🍽️', 'Restoran', 'Masakan lokal dan internasional', 1);
 
 -- DESTINATIONS
-CREATE TABLE destinations (
+CREATE TABLE IF NOT EXISTS destinations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   short_description VARCHAR(255) NOT NULL,
@@ -87,12 +87,12 @@ CREATE TABLE destinations (
 );
 
 -- TOUR PACKAGES
-CREATE TABLE tour_packages (
+CREATE TABLE IF NOT EXISTS tour_packages (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT NULL,
   price FLOAT NULL,
-  duration VARCHAR(255)  NULL,
+  duration VARCHAR(255) NULL,
   min_persons INT,
   max_persons INT,
   whatsapp_contact VARCHAR(20) NULL,
@@ -105,7 +105,7 @@ CREATE TABLE tour_packages (
 );
 
 -- CULTURES
-CREATE TABLE cultures (
+CREATE TABLE IF NOT EXISTS cultures (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(100) NOT NULL,
   description TEXT NULL,
