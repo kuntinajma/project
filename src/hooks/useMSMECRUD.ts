@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3005/api";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export interface MSME {
   id: string;
@@ -21,6 +21,7 @@ interface CreateMSMEData {
   instagram?: string;
   shopee?: string;
   whatsapp?: string;
+  user_id?: string;
 }
 
 interface UpdateMSMEData extends CreateMSMEData {

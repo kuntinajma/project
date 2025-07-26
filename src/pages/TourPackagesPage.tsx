@@ -86,8 +86,8 @@ const TourPackagesPage: React.FC<TourPackagesPageProps> = ({ onNavigate }) => {
             Paket Wisata
           </h1>
           <p className="mx-auto max-w-3xl text-xl text-gray-600">
-            Nikmati pengalaman terbaik di Pulau Laiya dengan paket 
-            wisata pilihan yang telah kami ciptakan khusus untuk Anda
+            Nikmati pengalaman terbaik di Pulau Laiya dengan paket wisata
+            pilihan yang telah kami ciptakan khusus untuk Anda
           </p>
 
           <div className="flex flex-row justify-center items-center mt-6">
@@ -126,7 +126,7 @@ const TourPackagesPage: React.FC<TourPackagesPageProps> = ({ onNavigate }) => {
                     pkg.image && pkg.image.includes("http")
                       ? pkg.image
                       : pkg.image
-                      ? `http://localhost:3005/api/files/upload/${pkg.image}`
+                      ? `http://localhost:5000/api/files/upload/${pkg.image}`
                       : "https://images.pexels.com/photos/1430676/pexels-photo-1430676.jpeg?auto=compress&cs=tinysrgb&w=800"
                   }
                   alt={pkg.name}

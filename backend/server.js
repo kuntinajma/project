@@ -9,7 +9,7 @@ require("dotenv").config();
 const { testConnection } = require("./config/database");
 
 const app = express();
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 5000;
 
 // Security middleware
 app.use(
@@ -25,7 +25,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "http://localhost:3005",
+      "http://localhost:5000",
       process.env.FRONTEND_URL || "http://localhost:3000",
     ],
     credentials: true,
@@ -72,20 +72,20 @@ app.use(
 // Test database connection
 testConnection();
 
-const usersRoutes = require('./routes/users');
-const contactRoutes = require('./routes/contact');
-const testimonialsRoutes = require('./routes/testimonials');
-const articlesRoutes = require('./routes/articles');
-const settingsRoutes = require('./routes/settings');
-const homeRoutes = require('./routes/home');
+const usersRoutes = require("./routes/users");
+const contactRoutes = require("./routes/contact");
+const testimonialsRoutes = require("./routes/testimonials");
+const articlesRoutes = require("./routes/articles");
+const settingsRoutes = require("./routes/settings");
+const homeRoutes = require("./routes/home");
 
 // Routes - Remove duplicate route registrations
-app.use('/api/users', usersRoutes);
-app.use('/api/contact', contactRoutes);
-app.use('/api/testimonials', testimonialsRoutes);
-app.use('/api/articles', articlesRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/home', homeRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/contact", contactRoutes);
+app.use("/api/testimonials", testimonialsRoutes);
+app.use("/api/articles", articlesRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/home", homeRoutes);
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/destinations", require("./routes/destinations"));
 app.use("/api/packages", require("./routes/packages"));

@@ -21,7 +21,7 @@ const HomePage: React.FC = () => {
     try {
       // Fetch featured destinations
       const destResponse = await axios.get(
-        "http://localhost:3005/api/destinations?limit=3"
+        "http://localhost:5000/api/destinations?limit=3"
       );
       if (destResponse.data.success) {
         setFeaturedDestinations(
@@ -35,7 +35,7 @@ const HomePage: React.FC = () => {
 
       // Fetch featured packages
       const packResponse = await axios.get(
-        "http://localhost:3005/api/packages?limit=3"
+        "http://localhost:5000/api/packages?limit=3"
       );
       if (packResponse.data.success) {
         setFeaturedPackages(
@@ -49,7 +49,7 @@ const HomePage: React.FC = () => {
 
       // Fetch UMKM count
       const umkmResponse = await axios.get(
-        "http://localhost:3005/api/umkm?limit=1"
+        "http://localhost:5000/api/umkm?limit=1"
       );
       if (umkmResponse.data.success) {
         setStats((prev) => ({
@@ -60,7 +60,7 @@ const HomePage: React.FC = () => {
 
       // Fetch culture count
       const cultureResponse = await axios.get(
-        "http://localhost:3005/api/culture?limit=1"
+        "http://localhost:5000/api/culture?limit=1"
       );
       if (cultureResponse.data.success) {
         setStats((prev) => ({

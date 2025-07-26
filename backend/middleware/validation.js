@@ -36,7 +36,7 @@ const validateUser = [
     .withMessage("Password minimal 6 karakter"),
   body("role")
     .isIn(roles)
-    .withMessage(`Role harus salah satu dari: ${roles.join(', ')}`),
+    .withMessage(`Role harus salah satu dari: ${roles.join(", ")}`),
   body("is_active")
     .optional()
     .isBoolean()
@@ -58,7 +58,7 @@ const validateUserUpdate = [
   body("role")
     .optional()
     .isIn(roles)
-    .withMessage(`Role harus salah satu dari: ${roles.join(', ')}`),
+    .withMessage(`Role harus salah satu dari: ${roles.join(", ")}`),
   body("is_active")
     .optional()
     .isBoolean()
@@ -286,25 +286,28 @@ const validateArticle = [
     .trim()
     .isLength({ max: 500 })
     .withMessage("Ringkasan maksimal 500 karakter"),
-  body("featuredImage")
-    .optional({ nullable: true })
-    .custom((value) => {
-      if (value === null || value === '') return true;
-      // Simple URL validation
-      try {
-        if (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))) {
-          return true;
-        }
-        return false;
-      } catch (e) {
-        return false;
-      }
-    })
-    .withMessage("URL gambar tidak valid"),
+  body("featuredImage").optional({ nullable: true }),
+  // .custom((value) => {
+  //   if (value === null || value === '') return true;
+  //   // Simple URL validation
+  //   try {
+  //     if (typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'))) {
+  //       return true;
+  //     }
+  //     return false;
+  //   } catch (e) {
+  //     return false;
+  //   }
+  // })
+  // .withMessage("URL gambar tidak valid"),
   body("tags")
     .optional()
     .custom((value) => {
-      if (value === null || (Array.isArray(value) && value.every(item => typeof item === 'string'))) {
+      if (
+        value === null ||
+        (Array.isArray(value) &&
+          value.every((item) => typeof item === "string"))
+      ) {
         return true;
       }
       return false;
@@ -346,10 +349,7 @@ const validateContactMessage = [
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage("Nama harus 2-100 karakter"),
-  body("email")
-    .isEmail()
-    .normalizeEmail()
-    .withMessage("Email tidak valid"),
+  body("email").isEmail().normalizeEmail().withMessage("Email tidak valid"),
   body("phone")
     .optional()
     .isMobilePhone("id-ID")

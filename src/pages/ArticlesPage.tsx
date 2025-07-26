@@ -19,13 +19,13 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: limit
+    itemsPerPage: limit,
   });
 
   const {
     getArticles,
     loading: fetchLoading,
-    error: fetchError
+    error: fetchError,
   } = useArticles();
 
   const filters = [
@@ -96,7 +96,7 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
   if (selectedArticle) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="px-4 py-8 mx-auto max-w-4xl sm:px-6 lg:px-8">
+        <div className="max-w-4xl px-4 py-8 mx-auto sm:px-6 lg:px-8">
           <button
             onClick={handleBackToList}
             className="flex items-center mb-6 space-x-2 text-orange-600 hover:text-orange-700"
@@ -108,7 +108,11 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
           <article className="overflow-hidden bg-white rounded-lg shadow-lg">
             {selectedArticle.featuredImage && (
               <img
-                src={selectedArticle.featuredImage}
+                src={
+                  selectedArticle.featuredImage?.includes("http")
+                    ? selectedArticle.featuredImage
+                    : `http://localhost:5000/uploads/${selectedArticle.featuredImage}`
+                }
                 alt={selectedArticle.title}
                 className="object-cover w-full h-64 md:h-96"
               />
@@ -122,14 +126,14 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
               <div className="flex flex-wrap items-center mb-6 space-x-4 text-sm text-gray-500">
                 <div className="flex items-center">
                   <User size={16} className="mr-1" />
-                  <span>{selectedArticle.authorName || 'Unknown Author'}</span>
+                  <span>{selectedArticle.authorName || "Unknown Author"}</span>
                 </div>
                 <div className="flex items-center">
                   <Calendar size={16} className="mr-1" />
                   <span>
                     {selectedArticle.publishedAt
                       ? formatDate(selectedArticle.publishedAt)
-                      : 'Unpublished'}
+                      : "Unpublished"}
                   </span>
                 </div>
                 <div className="px-2 py-1 mt-2 text-xs text-blue-800 bg-blue-100 rounded-full sm:mt-0">
@@ -138,7 +142,7 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
               </div>
 
               {selectedArticle.excerpt && (
-                <div className="p-4 mb-6 italic bg-gray-50 rounded-md">
+                <div className="p-4 mb-6 italic rounded-md bg-gray-50">
                   {selectedArticle.excerpt}
                 </div>
               )}
@@ -161,9 +165,9 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
           <h1 className="mb-4 text-4xl font-bold text-gray-900">
             Artikel & Panduan Wisata
           </h1>
-          <p className="mx-auto max-w-3xl text-xl text-gray-600">
-            Temukan tips perjalanan, panduan wisata, dan kisah menarik seputar Pulau Laiya 
-            dari para wisatawan dan komunitas lokal
+          <p className="max-w-3xl mx-auto text-xl text-gray-600">
+            Temukan tips perjalanan, panduan wisata, dan kisah menarik seputar
+            Pulau Laiya dari para wisatawan dan komunitas lokal
           </p>
         </div>
 
@@ -172,13 +176,13 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute top-3 left-3 w-5 h-5 text-gray-400" />
+                <Search className="absolute w-5 h-5 text-gray-400 top-3 left-3" />
                 <input
                   type="text"
                   placeholder="Search articles..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="py-2 pr-4 pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -225,10 +229,14 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
             {articles.map((article: Article) => (
               <div
                 key={article.id}
-                className="overflow-hidden bg-white rounded-lg shadow-lg transition-shadow hover:shadow-xl"
+                className="overflow-hidden transition-shadow bg-white rounded-lg shadow-lg hover:shadow-xl"
               >
                 <img
-                  src={article.featuredImage}
+                  src={
+                    article.featuredImage?.includes("http")
+                      ? article.featuredImage
+                      : `http://localhost:5000/uploads/${article.featuredImage}`
+                  }
                   alt={article.title}
                   className="object-cover w-full h-48"
                 />
@@ -241,7 +249,9 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
                     <div className="flex items-center space-x-1 text-gray-500">
                       <Calendar size={14} />
                       <span className="text-xs">
-                        {formatDate(article.publishedAt)}
+                        {article.publishedAt
+                          ? formatDate(article.publishedAt)
+                          : "Unpublished"}
                       </span>
                     </div>
                   </div>
@@ -254,7 +264,7 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
                     {article.excerpt}
                   </p>
 
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <User size={16} className="text-gray-400" />
                       <span className="text-sm text-gray-600">
@@ -289,12 +299,14 @@ const ArticlesPage: React.FC<ArticlesPageProps> = ({ onNavigate }) => {
             Bagikan Ceritamu
           </h3>
           <p className="mb-6 text-gray-600">
-            Pernah berkunjung ke Pulau Laiya? Bagikan pengalaman, tips, dan kisah perjalananmu kepada sesama wisatawan. 
-            Kontribusimu akan menjadi sumber inspirasi dan informasi berharga bagi para pengunjung di masa depan.
+            Pernah berkunjung ke Pulau Laiya? Bagikan pengalaman, tips, dan
+            kisah perjalananmu kepada sesama wisatawan. Kontribusimu akan
+            menjadi sumber inspirasi dan informasi berharga bagi para pengunjung
+            di masa depan.
           </p>
           <Link
             to="/kontak#contribute"
-            className="inline-block px-6 py-3 text-white bg-orange-600 rounded-lg transition-colors hover:bg-orange-700"
+            className="inline-block px-6 py-3 text-white transition-colors bg-orange-600 rounded-lg hover:bg-orange-700"
           >
             Kirim Artikelmu
           </Link>

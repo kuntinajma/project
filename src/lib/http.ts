@@ -1,7 +1,7 @@
 // src/lib/http.ts
 
 const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3005/api";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 type HttpOptions = Omit<RequestInit, "body"> & {
   query?: Record<string, string | number>;
@@ -58,7 +58,7 @@ export async function http<T>(
   if (!headers["content-type"] && !(body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
-  
+
   // Add authentication token if available and not already set
   if (!headers["authorization"]) {
     const token = localStorage.getItem("token");
@@ -86,8 +86,8 @@ export async function http<T>(
   let data: T;
 
   try {
-    console.log(`Making ${fetchOptions.method || 'GET'} request to ${fullUrl}`);
-    
+    console.log(`Making ${fetchOptions.method || "GET"} request to ${fullUrl}`);
+
     const response = await fetch(fullUrl, {
       ...fetchOptions,
       headers,

@@ -7,7 +7,7 @@
 
 const axios = require("axios");
 
-const BASE_URL = "http://localhost:3005/api";
+const BASE_URL = "http://localhost:5000/api";
 let authToken = "";
 
 // Test functions

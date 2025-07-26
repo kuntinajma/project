@@ -114,10 +114,39 @@ const createMSME = async (req, res) => {
       instagram = null,
       shopee = null,
       whatsapp = null,
+      user_id,
     } = req.body;
 
-    // Get user_id from authenticated user
-    const user_id = req.user.id;
+    // Validasi: user_id harus ada
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id wajib diisi",
+      });
+    }
+
+    // Validasi: user_id harus role msme
+    const [users] = await pool.execute("SELECT * FROM users WHERE id = ?", [
+      user_id,
+    ]);
+    if (!users.length || users[0].role !== "msme") {
+      return res.status(400).json({
+        success: false,
+        message: "User harus berperan sebagai msme",
+      });
+    }
+
+    // Validasi: user_id belum punya UMKM
+    const [msmes] = await pool.execute(
+      "SELECT * FROM msmes WHERE user_id = ?",
+      [user_id]
+    );
+    if (msmes.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "User ini sudah memiliki UMKM",
+      });
+    }
 
     const [result] = await pool.execute(
       `INSERT INTO msmes (
@@ -155,9 +184,6 @@ const updateMSME = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Get user_id from authenticated user
-    const user_id = req.user.id;
-
     const {
       brand,
       description,
@@ -167,10 +193,9 @@ const updateMSME = async (req, res) => {
       whatsapp = null,
     } = req.body;
 
-    // Check if MSME belongs to authenticated user
     const [existingMSME] = await pool.execute(
-      "SELECT * FROM msmes WHERE id = ? AND user_id = ?",
-      [id, user_id]
+      "SELECT * FROM msmes WHERE id = ?",
+      [id]
     );
 
     if (existingMSME.length === 0) {
@@ -183,14 +208,11 @@ const updateMSME = async (req, res) => {
     await pool.execute(
       `UPDATE msmes
        SET brand = ?, description = ?, phone = ?, instagram = ?, shopee = ?, whatsapp = ?
-       WHERE id = ? AND user_id = ?`,
-      [brand, description, phone, instagram, shopee, whatsapp, id, user_id]
+       WHERE id = ?`,
+      [brand, description, phone, instagram, shopee, whatsapp, id]
     );
 
-    const [rows] = await pool.execute(
-      "SELECT * FROM msmes WHERE id = ? AND user_id = ?",
-      [id, user_id]
-    );
+    const [rows] = await pool.execute("SELECT * FROM msmes WHERE id = ?", [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({
@@ -218,13 +240,7 @@ const deleteMSME = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Get user_id from authenticated user
-    const user_id = req.user.id;
-
-    const [result] = await pool.execute(
-      "DELETE FROM msmes WHERE id = ? AND user_id = ?",
-      [id, user_id]
-    );
+    const [result] = await pool.execute("DELETE FROM msmes WHERE id = ?", [id]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
