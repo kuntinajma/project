@@ -124,22 +124,22 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
   };
 
   const teamMembers = [
-    { name: 'Kunti Najma Jalia', university: 'Universitas Sains Al-Quran', major: 'Teknik Informatika', photo: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150' },
-    { name: 'Julianto Cahyo P.', university: 'Universitas Noor Huda Mustofa', major: 'Ilmu Keperawatan', photo: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150' },
-    { name: 'Heru', university: 'Universitas Sultan Ageng Tirtayasa', major: 'Ilmu Perikanan', photo: 'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg?auto=compress&cs=tinysrgb&w=150' },
-    { name: 'Nur Aisyah', university: 'Universitas Tadulako', major: 'Ilmu Pemerintahan', photo: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=150' },
-    { name: 'Diva Amanda Putri', university: 'Universitas Bangka Belitung', major: 'Hukum', photo: 'https://randomuser.me/api/portraits/men/1.jpg' },
-    { name: 'Dilla Nazalatul Amira', university: 'Universitas Malikussaleh', major: 'Administrasi Bisnis', photo: 'https://randomuser.me/api/portraits/women/2.jpg' },
-    { name: 'Hengky', university: 'Universitas Khairun', major: 'Manajemen', photo: 'https://randomuser.me/api/portraits/men/3.jpg' },
-    { name: 'Dicky Putra Setiawan', university: 'UIN Sayyid Ali Rahmatullah ', major: 'Komunikasi Penyiaran Islam', photo: 'https://randomuser.me/api/portraits/women/4.jpg' },
-    { name: 'M. Aqwam', university: 'Universitas Lampung', major: 'Biologi', photo: 'https://randomuser.me/api/portraits/men/5.jpg' },
-    { name: 'Asmar', university: 'Universitas 19 November Kolaka', major: 'Teknik Sipil', photo: 'https://randomuser.me/api/portraits/women/6.jpg' },
-    { name: 'Winda Septiani', university: 'Universitas Boyolali', major: 'Akutansi', photo: 'https://randomuser.me/api/portraits/men/7.jpg' },
-    { name: 'Risma Ardiyanti', university: 'Universitas Khairun', major: 'Hukum', photo: 'https://randomuser.me/api/portraits/women/8.jpg' },
-    { name: 'Rindang Yulistina', university: 'Unoversitas Halu Oleo', major: 'Ilmu Budaya', photo: 'https://randomuser.me/api/portraits/men/9.jpg' },
-    { name: 'Sabrina Syafa', university: 'Institut Teknologi Sepuluh November', major: 'Statistika Bisnis', photo: 'https://randomuser.me/api/portraits/women/10.jpg' },
-    { name: 'M. Haikal Faran F.', university: 'Universitas Bangka Belitung', major: 'Manajemen', photo: 'https://randomuser.me/api/portraits/men/11.jpg' },
-    { name: 'Rahmat Firsandi', university: 'Institut Teknologi Kalimantan', major: 'Teknik Kelautan', photo: 'https://randomuser.me/api/portraits/women/12.jpg' },
+    { name: 'Julianto Cahyo P.', university: 'Universitas Noor Huda Mustofa', major: 'Ilmu Keperawatan', photo: '/images/jul.jpg' },
+    { name: 'Kunti Najma Jalia', university: 'Universitas Sains Al-Quran', major: 'Teknik Informatika', photo: '/images/najma.jpg' },
+    { name: 'Heru', university: 'Universitas Sultan Ageng Tirtayasa', major: 'Ilmu Perikanan', photo: '/images/heru.jpg' },
+    { name: 'Nur Aisyah', university: 'Universitas Tadulako', major: 'Ilmu Pemerintahan', photo: '/images/aisya.jpg' },
+    { name: 'Diva Amanda Putri', university: 'Universitas Bangka Belitung', major: 'Hukum', photo: '/images/diva.jpg' },
+    { name: 'Dilla Nazalatul Amira', university: 'Universitas Malikussaleh', major: 'Administrasi Bisnis', photo: '/images/dilla.jpg' },
+    { name: 'Hengky', university: 'Universitas Khairun', major: 'Manajemen', photo: '/images/hengky.jpg' },
+    { name: 'Dicky Putra Setiawan', university: 'UIN Sayyid Ali Rahmatullah ', major: 'Komunikasi Penyiaran Islam', photo: '/images/dicky.jpg' },
+    { name: 'M. Aqwam', university: 'Universitas Lampung', major: 'Biologi', photo: '/images/aqwam.jpg' },
+    { name: 'Asmar', university: 'Universitas 19 November Kolaka', major: 'Teknik Sipil', photo: '/images/asmar.jpg' },
+    { name: 'Winda Septiani', university: 'Universitas Boyolali', major: 'Akutansi', photo: '/images/hengky.jpg' },
+    { name: 'Risma Ardiyanti', university: 'Universitas Khairun', major: 'Hukum', photo: '/images/risma.jpg' },
+    { name: 'Rindang Yulistina', university: 'Unoversitas Halu Oleo', major: 'Ilmu Budaya', photo: '/images/rindang.jpg' },
+    { name: 'Sabrina Syafa', university: 'Institut Teknologi Sepuluh November', major: 'Statistika Bisnis', photo: '/images/sabrina.jpg' },
+    { name: 'M. Haikal Faran F.', university: 'Universitas Bangka Belitung', major: 'Manajemen', photo: '/images/haikal.jpg' },
+    { name: 'Rahmat Firsandi', university: 'Institut Teknologi Kalimantan', major: 'Teknik Kelautan', photo: '/images/sandi.jpg' },
   ];
 
   return (
