@@ -158,7 +158,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Kunjungi Laiya Island</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Kunjungi Pulau Laiya</h3>
               <p className="text-gray-600 mb-6">
                 Pulau Laiya terletak di perairan jernih Sulawesi Selatan dan dapat diakses melalui perjalanan laut dari Pelabuhan Bulukumba.
                 Tempat untuk melepas penat dari hiruk-pikuk kehidupan kota dan menikmati keindahan alam yang masih alami.

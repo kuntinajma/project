@@ -14,13 +14,13 @@ const Footer: React.FC = () => {
               Temukan keindahan alam dan kearifan tradisional di Pulau Laiya.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-orange-400 transition-colors">
+              <a href="https://wa.me/6287872426078?text=Halo%2C%20saya%20mendapatkan%20kontak%20ini%20dari%20web%20Pulau%20Laiya.%20Saya%20ingin%20bertanya..." className="text-gray-300 hover:text-orange-400 transition-colors">
                 WhatsApp
               </a>
               <a href="https://www.instagram.com/pulaulaiya/" className="text-gray-300 hover:text-orange-400 transition-colors">
                 Instagram
               </a>
-              <a href="#" className="text-gray-300 hover:text-orange-400 transition-colors">
+              <a href="https://www.youtube.com/@Laiya.aisland" className="text-gray-300 hover:text-orange-400 transition-colors">
                 YouTube
               </a>
             </div>
@@ -44,9 +44,7 @@ const Footer: React.FC = () => {
             <h4 className="text-lg font-semibold mb-4">Kontak</h4>
             <div className="space-y-2 text-gray-300">
               <p>📍 Pulau Laiya, Kabuptaen Pangkep, Sulawesi Selatan</p>
-              <p>📞 +62 812-3456-7890</p>
-              <p>✉️ info@pulaulaiya.com</p>
-              <p>💬 WhatsApp: +6281234567890</p>
+              <p>📞 +62 878-7242-6078</p>
             </div>
           </div>
         </div>
