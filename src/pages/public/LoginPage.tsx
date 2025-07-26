@@ -104,16 +104,8 @@ const LoginPage: React.FC = () => {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Demo Account</span>
-              </div>
             </div>
-
             <div className="mt-4 bg-gray-50 rounded-md p-4">
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>Username:</strong> admin<br />
-                <strong>Password:</strong> admin123
-              </p>
             </div>
           </div>
 
