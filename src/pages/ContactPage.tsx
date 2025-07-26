@@ -131,7 +131,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
     { name: 'Diva Amanda Putri', university: 'Universitas Bangka Belitung', major: 'Hukum', photo: 'https://randomuser.me/api/portraits/men/1.jpg' },
     { name: 'Dilla Nazalatul Amira', university: 'Universitas Malikussaleh', major: 'Administrasi Bisnis', photo: 'https://randomuser.me/api/portraits/women/2.jpg' },
     { name: 'Hengky', university: 'Universitas Khairun', major: 'Manajemen', photo: 'https://randomuser.me/api/portraits/men/3.jpg' },
-    { name: 'Dicky Putra Setiawan', university: 'UIN Sayyid Ali Rahmatullah ', major: 'Psychology', photo: 'https://randomuser.me/api/portraits/women/4.jpg' },
+    { name: 'Dicky Putra Setiawan', university: 'UIN Sayyid Ali Rahmatullah ', major: 'Komunikasi Penyiaran Islam', photo: 'https://randomuser.me/api/portraits/women/4.jpg' },
     { name: 'M. Aqwam', university: 'Universitas Lampung', major: 'Biologi', photo: 'https://randomuser.me/api/portraits/men/5.jpg' },
     { name: 'Asmar', university: 'Universitas 19 November Kolaka', major: 'Teknik Sipil', photo: 'https://randomuser.me/api/portraits/women/6.jpg' },
     { name: 'Winda Septiani', university: 'Universitas Boyolali', major: 'Akutansi', photo: 'https://randomuser.me/api/portraits/men/7.jpg' },
