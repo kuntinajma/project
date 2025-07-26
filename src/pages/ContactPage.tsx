@@ -124,22 +124,22 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
   };
 
   const teamMembers = [
-    { name: 'Sarah Johnson', university: 'University of Indonesia', major: 'Tourism Management', photo: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150' },
-    { name: 'Ahmad Rahman', university: 'Hasanuddin University', major: 'Information Technology', photo: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150' },
-    { name: 'Maria Santos', university: 'Gadjah Mada University', major: 'Cultural Studies', photo: 'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg?auto=compress&cs=tinysrgb&w=150' },
-    { name: 'David Kim', university: 'Bandung Institute of Technology', major: 'Environmental Engineering', photo: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=150' },
-    { name: 'John Doe', university: 'Dummy University 1', major: 'Computer Science', photo: 'https://randomuser.me/api/portraits/men/1.jpg' },
-    { name: 'Jane Smith', university: 'Dummy University 2', major: 'Business Administration', photo: 'https://randomuser.me/api/portraits/women/2.jpg' },
-    { name: 'Michael Brown', university: 'Dummy University 3', major: 'Mechanical Engineering', photo: 'https://randomuser.me/api/portraits/men/3.jpg' },
-    { name: 'Emily Davis', university: 'Dummy University 4', major: 'Psychology', photo: 'https://randomuser.me/api/portraits/women/4.jpg' },
-    { name: 'William Wilson', university: 'Dummy University 5', major: 'Economics', photo: 'https://randomuser.me/api/portraits/men/5.jpg' },
-    { name: 'Olivia Martinez', university: 'Dummy University 6', major: 'Marketing', photo: 'https://randomuser.me/api/portraits/women/6.jpg' },
-    { name: 'James Taylor', university: 'Dummy University 7', major: 'Civil Engineering', photo: 'https://randomuser.me/api/portraits/men/7.jpg' },
-    { name: 'Sophia Anderson', university: 'Dummy University 8', major: 'Graphic Design', photo: 'https://randomuser.me/api/portraits/women/8.jpg' },
-    { name: 'Benjamin Thomas', university: 'Dummy University 9', major: 'Finance', photo: 'https://randomuser.me/api/portraits/men/9.jpg' },
-    { name: 'Isabella Jackson', university: 'Dummy University 10', major: 'Education', photo: 'https://randomuser.me/api/portraits/women/10.jpg' },
-    { name: 'Daniel White', university: 'Dummy University 11', major: 'Architecture', photo: 'https://randomuser.me/api/portraits/men/11.jpg' },
-    { name: 'Mia Harris', university: 'Dummy University 12', major: 'Environmental Science', photo: 'https://randomuser.me/api/portraits/women/12.jpg' },
+    { name: 'Kunti Najma Jalia', university: 'Universitas Sains Al-Quran', major: 'Teknik Informatika', photo: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { name: 'Julianto Cahyo P.', university: 'Universitas Noor Huda Mustofa', major: 'Ilmu Keperawatan', photo: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { name: 'Heru', university: 'Universitas Sultan Ageng Tirtayasa', major: 'Ilmu Perikanan', photo: 'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { name: 'Nur Aisyah', university: 'Universitas Tadulako', major: 'Ilmu Pemerintahan', photo: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { name: 'Diva Amanda Putri', university: 'Universitas Bangka Belitung', major: 'Hukum', photo: 'https://randomuser.me/api/portraits/men/1.jpg' },
+    { name: 'Dilla Nazalatul Amira', university: 'Universitas Malikussaleh', major: 'Administrasi Bisnis', photo: 'https://randomuser.me/api/portraits/women/2.jpg' },
+    { name: 'Hengky', university: 'Universitas Khairun', major: 'Manajemen', photo: 'https://randomuser.me/api/portraits/men/3.jpg' },
+    { name: 'Dicky Putra Setiawan', university: 'UIN Sayyid Ali Rahmatullah ', major: 'Psychology', photo: 'https://randomuser.me/api/portraits/women/4.jpg' },
+    { name: 'M. Aqwam', university: 'Universitas Lampung', major: 'Biologi', photo: 'https://randomuser.me/api/portraits/men/5.jpg' },
+    { name: 'Asmar', university: 'Universitas 19 November Kolaka', major: 'Teknik Sipil', photo: 'https://randomuser.me/api/portraits/women/6.jpg' },
+    { name: 'Winda Septiani', university: 'Universitas Boyolali', major: 'Akutansi', photo: 'https://randomuser.me/api/portraits/men/7.jpg' },
+    { name: 'Risma Ardiyanti', university: 'Universitas Khairun', major: 'Hukum', photo: 'https://randomuser.me/api/portraits/women/8.jpg' },
+    { name: 'Rindang Yulistina', university: 'Unoversitas Halu Oleo', major: 'Ilmu Budaya', photo: 'https://randomuser.me/api/portraits/men/9.jpg' },
+    { name: 'Sabrina Syafa', university: 'Institut Teknologi Sepuluh November', major: 'Statistika Bisnis', photo: 'https://randomuser.me/api/portraits/women/10.jpg' },
+    { name: 'M. Haikal Faran F.', university: 'Universitas Bangka Belitung', major: 'Manajemen', photo: 'https://randomuser.me/api/portraits/men/11.jpg' },
+    { name: 'Rahmat Firsandi', university: 'Institut Teknologi Kalimantan', major: 'Teknik Kelautan', photo: 'https://randomuser.me/api/portraits/women/12.jpg' },
   ];
 
   return (
