@@ -74,7 +74,9 @@ async function insertSampleData(connection) {
       true,
     ],
     ["Admin Wisata", "admin@laiya.com", demoPassword, "admin", true],
-    ["UMKM Kerajinan Laiya", "umkm@laiya.com", demoPassword, "msme", true],
+    ["UMKM Laiya 1", "umkm1@laiya.com", demoPassword, "msme", true],
+    ["UMKM Laiya 2", "umkm2@laiya.com", demoPassword, "msme", true],
+    ["UMKM Laiya 3", "umkm3@laiya.com", demoPassword, "msme", true],
     ["Penulis Artikel", "writer@laiya.com", demoPassword, "contributor", true],
   ];
 
@@ -211,14 +213,12 @@ async function insertSampleData(connection) {
     );
   }
 
-  // Get UMKM user ID
+  // Get UMKM user IDs
   const [umkmUsers] = await connection.execute(
-    'SELECT id FROM users WHERE email = "umkm@laiya.com" LIMIT 1'
+    'SELECT id FROM users WHERE email IN ("umkm1@laiya.com", "umkm2@laiya.com", "umkm3@laiya.com") ORDER BY email'
   );
-  if (umkmUsers.length > 0) {
-    const umkmUserId = umkmUsers[0].id;
-
-    // Insert multiple sample MSMEs
+  if (umkmUsers.length === 3) {
+    // Insert multiple sample MSMEs, assign ke user berbeda
     const msmeData = [
       {
         brand: "UD Laiya",
@@ -228,7 +228,7 @@ async function insertSampleData(connection) {
         instagram: "https://instagram.com/laiya/",
         shopee: "https://shopee.co.id/seller/laiya",
         whatsapp: "09877631132",
-        user_id: umkmUserId,
+        user_id: umkmUsers[0].id,
       },
       {
         brand: "Kerajinan Tangan Laiya",
@@ -238,7 +238,7 @@ async function insertSampleData(connection) {
         instagram: "kerajinan_laiya",
         shopee: "https://shopee.co.id/kerajinan-laiya",
         whatsapp: "+62 812-3456-7890",
-        user_id: umkmUserId,
+        user_id: umkmUsers[1].id,
       },
       {
         brand: "Kuliner Seafood Laiya",
@@ -248,7 +248,7 @@ async function insertSampleData(connection) {
         instagram: "seafood_laiya",
         shopee: "https://shopee.co.id/seafood-laiya",
         whatsapp: "+62 813-4567-8901",
-        user_id: umkmUserId,
+        user_id: umkmUsers[2].id,
       },
     ];
 

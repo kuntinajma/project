@@ -47,6 +47,7 @@ const Articles: React.FC = () => {
     featuredImage: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  console.log(formData);
 
   // Hooks for API operations
   const {
@@ -54,7 +55,7 @@ const Articles: React.FC = () => {
     loading: fetchLoading,
     error: fetchError,
   } = useArticles();
-  
+
   const {
     createArticle,
     updateArticle,
@@ -62,7 +63,7 @@ const Articles: React.FC = () => {
     loading: crudLoading,
     error: crudError,
   } = useArticlesCRUD();
-  
+
   const { uploadFiles, uploading: uploadLoading } = useUploadFiles();
 
   // State to store articles data
@@ -71,7 +72,7 @@ const Articles: React.FC = () => {
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: limit
+    itemsPerPage: limit,
   });
 
   // Debounce search term updates
@@ -79,10 +80,10 @@ const Articles: React.FC = () => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, [searchTerm]);
-  
+
   // Fetch articles when component mounts or when filters/search change
   useEffect(() => {
     const fetchArticles = async () => {
@@ -100,12 +101,20 @@ const Articles: React.FC = () => {
         setPagination(response.pagination);
       } catch (error) {
         console.error("Error fetching articles:", error);
-        showToast('error', 'Failed to fetch articles');
+        showToast("error", "Failed to fetch articles");
       }
     };
 
     fetchArticles();
-  }, [currentPage, limit, filterCategory, filterStatus, debouncedSearchTerm, getArticles, showToast]);
+  }, [
+    currentPage,
+    limit,
+    filterCategory,
+    filterStatus,
+    debouncedSearchTerm,
+    getArticles,
+    showToast,
+  ]);
 
   // Filter articles based on user role
   const getFilteredArticles = () => {
@@ -113,7 +122,9 @@ const Articles: React.FC = () => {
 
     // If contributor, only show their own articles
     if (user?.role === "contributor") {
-      filtered = articles.filter((article) => article.authorId === String(user?.id));
+      filtered = articles.filter(
+        (article) => article.authorId === String(user?.id)
+      );
     }
 
     return filtered;
@@ -175,15 +186,15 @@ const Articles: React.FC = () => {
           "success",
           `Artikel ${articleToDelete.title} berhasil dihapus`
         );
-        
+
         // Remove the deleted article from the current list instead of making a new API call
-        setArticles(prev => prev.filter(a => a.id !== articleToDelete.id));
-        
+        setArticles((prev) => prev.filter((a) => a.id !== articleToDelete.id));
+
         // Update pagination count
-        setPagination(prev => ({
+        setPagination((prev) => ({
           ...prev,
           totalItems: prev.totalItems - 1,
-          totalPages: Math.ceil((prev.totalItems - 1) / prev.itemsPerPage)
+          totalPages: Math.ceil((prev.totalItems - 1) / prev.itemsPerPage),
         }));
       } else {
         showToast("error", result.message || "Gagal menghapus artikel");
@@ -222,7 +233,7 @@ const Articles: React.FC = () => {
             featuredImage = uploadedUrls[0];
           }
         } catch (error) {
-          console.error('Image upload error:', error);
+          console.error("Image upload error:", error);
           showToast("error", "Failed to upload image");
         }
       }
@@ -232,7 +243,7 @@ const Articles: React.FC = () => {
         ...formData,
         featuredImage,
         excerpt: formData.excerpt || null,
-        tags: formData.tags || []
+        tags: formData.tags || [],
       };
 
       type ArticleResult = {
@@ -245,25 +256,27 @@ const Articles: React.FC = () => {
       let result: ArticleResult;
       if (selectedArticle) {
         result = await updateArticle(selectedArticle.id, articleData);
-        
+
         if (result.success && result.data) {
           // Update the article in the current list
-          setArticles(prev => prev.map(a => 
-            a.id === selectedArticle.id ? result.data as Article : a
-          ));
+          setArticles((prev) =>
+            prev.map((a) =>
+              a.id === selectedArticle.id ? (result.data as Article) : a
+            )
+          );
         }
       } else {
         result = await createArticle(articleData);
-        
+
         if (result.success && result.data) {
           // Add the new article to the current list
-          setArticles(prev => [result.data as Article, ...prev]);
-          
+          setArticles((prev) => [result.data as Article, ...prev]);
+
           // Update pagination count
-          setPagination(prev => ({
+          setPagination((prev) => ({
             ...prev,
             totalItems: prev.totalItems + 1,
-            totalPages: Math.ceil((prev.totalItems + 1) / prev.itemsPerPage)
+            totalPages: Math.ceil((prev.totalItems + 1) / prev.itemsPerPage),
           }));
         }
       }
@@ -298,10 +311,12 @@ const Articles: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Submit error:", error);
-      
+
       // Handle specific error types
       if (error.response && error.response.errors) {
-        const errorMessages = error.response.errors.map((err: any) => err.msg).join(", ");
+        const errorMessages = error.response.errors
+          .map((err: any) => err.msg)
+          .join(", ");
         showToast("error", `Validasi gagal: ${errorMessages}`);
       } else if (error.response && error.response.message) {
         showToast("error", error.response.message);
@@ -321,17 +336,17 @@ const Articles: React.FC = () => {
         status: "published",
         featuredImage: article.featuredImage,
         tags: article.tags,
-        isFeatured: article.isFeatured
+        isFeatured: article.isFeatured,
       });
-      
+
       if (result.success) {
         showToast("success", `Artikel ${article.title} berhasil disetujui`);
-        
+
         // Update the article in the current list
         if (result.data) {
-          setArticles(prev => prev.map(a => 
-            a.id === article.id ? result.data : a
-          ));
+          setArticles((prev) =>
+            prev.map((a) => (a.id === article.id ? result.data : a))
+          );
         }
       } else {
         showToast("error", result.message || "Gagal menyetujui artikel");
@@ -352,17 +367,17 @@ const Articles: React.FC = () => {
         status: "rejected",
         featuredImage: article.featuredImage,
         tags: article.tags,
-        isFeatured: article.isFeatured
+        isFeatured: article.isFeatured,
       });
-      
+
       if (result.success) {
         showToast("error", `Artikel ${article.title} ditolak`);
-        
+
         // Update the article in the current list
         if (result.data) {
-          setArticles(prev => prev.map(a => 
-            a.id === article.id ? result.data : a
-          ));
+          setArticles((prev) =>
+            prev.map((a) => (a.id === article.id ? result.data : a))
+          );
         }
       } else {
         showToast("error", result.message || "Gagal menolak artikel");
@@ -372,7 +387,7 @@ const Articles: React.FC = () => {
       showToast("error", "Terjadi kesalahan saat menolak artikel");
     }
   };
-  
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "published":
@@ -410,7 +425,7 @@ const Articles: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
             {user?.role === "contributor"
@@ -425,7 +440,7 @@ const Articles: React.FC = () => {
         </div>
         <button
           onClick={handleAddArticle}
-          className="flex items-center px-4 py-2 space-x-2 text-white bg-orange-600 rounded-lg transition-colors hover:bg-orange-700"
+          className="flex items-center px-4 py-2 space-x-2 text-white transition-colors bg-orange-600 rounded-lg hover:bg-orange-700"
         >
           <PlusIcon className="w-5 h-5" />
           <span>
@@ -439,13 +454,13 @@ const Articles: React.FC = () => {
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div className="flex-1 max-w-md">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute top-3 left-3 w-5 h-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute w-5 h-5 text-gray-400 top-3 left-3" />
               <input
                 type="text"
                 placeholder="Search articles..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="py-2 pr-4 pl-10 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -454,7 +469,7 @@ const Articles: React.FC = () => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             >
               <option value="all">All Status</option>
               <option value="published">Published</option>
@@ -466,7 +481,7 @@ const Articles: React.FC = () => {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             >
               <option value="all">All Categories</option>
               <option value="tips">Tips</option>
@@ -492,7 +507,7 @@ const Articles: React.FC = () => {
         ) : (
           filteredArticles.map((article) => (
             <div key={article.id} className="p-6 bg-white rounded-lg shadow-md">
-              <div className="flex justify-between items-start">
+              <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center mb-2 space-x-3">
                     <h3 className="text-xl font-semibold text-gray-900">
@@ -517,10 +532,12 @@ const Articles: React.FC = () => {
                   <p className="mb-3 text-gray-600">{article.excerpt}</p>
 
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>by {article.authorName || 'Unknown'}</span>
+                    <span>by {article.authorName || "Unknown"}</span>
                     <span>•</span>
                     <span>
-                      {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'Not published'}
+                      {article.publishedAt
+                        ? new Date(article.publishedAt).toLocaleDateString()
+                        : "Not published"}
                     </span>
                     <span>•</span>
                     <span>{article.viewCount || 0} views</span>
@@ -576,31 +593,37 @@ const Articles: React.FC = () => {
         <div className="flex justify-center mt-4">
           <nav className="flex items-center space-x-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 disabled:opacity-50"
+              className="px-3 py-1 text-gray-700 bg-gray-100 rounded-md disabled:opacity-50"
             >
               Previous
             </button>
-            
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded-md ${
-                  page === currentPage
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            
+
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
+              (page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1 rounded-md ${
+                    page === currentPage
+                      ? "bg-orange-600 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            )}
+
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  Math.min(prev + 1, pagination.totalPages)
+                )
+              }
               disabled={currentPage === pagination.totalPages}
-              className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 disabled:opacity-50"
+              className="px-3 py-1 text-gray-700 bg-gray-100 rounded-md disabled:opacity-50"
             >
               Next
             </button>
@@ -623,8 +646,8 @@ const Articles: React.FC = () => {
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
 
-          <div className="overflow-y-auto fixed inset-0">
-            <div className="flex justify-center items-center p-4 min-h-full text-center">
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-full p-4 text-center">
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -653,7 +676,7 @@ const Articles: React.FC = () => {
                         onChange={(e) =>
                           handleFormChange("title", e.target.value)
                         }
-                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
 
@@ -667,7 +690,7 @@ const Articles: React.FC = () => {
                           onChange={(e) =>
                             handleFormChange("category", e.target.value)
                           }
-                          className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         >
                           <option value="tips">Tips</option>
                           <option value="tourism">Tourism</option>
@@ -688,7 +711,7 @@ const Articles: React.FC = () => {
                             onChange={(e) =>
                               handleFormChange("status", e.target.value)
                             }
-                            className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                           >
                             <option value="draft">Draft</option>
                             <option value="pending">Pending Review</option>
@@ -710,7 +733,7 @@ const Articles: React.FC = () => {
                           handleFormChange("excerpt", e.target.value)
                         }
                         placeholder="Brief description of your article..."
-                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
 
@@ -725,39 +748,49 @@ const Articles: React.FC = () => {
                           handleFormChange("content", e.target.value)
                         }
                         placeholder="Write your article content here..."
-                        className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
                       <label className="block mb-1 text-sm font-medium text-gray-700">
-                        Featured Image URL
+                        Featured Image
                       </label>
                       <div className="flex items-center space-x-4">
-                        <div className="flex justify-center items-center w-20 h-20 bg-gray-200 rounded-lg">
-                          <PhotoIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <div className="flex-1">
-                          <input
-                            type="url"
-                            value={formData.featuredImage}
-                            onChange={(e) =>
-                              handleFormChange("featuredImage", e.target.value)
+                        {/* Preview gambar lama jika ada */}
+                        {formData.featuredImage && (
+                          <img
+                            src={
+                              formData.featuredImage?.includes("http")
+                                ? formData.featuredImage
+                                : `http://localhost:5000/uploads/${formData.featuredImage}`
                             }
-                            placeholder="Enter image URL or upload file below"
-                            className="px-3 py-2 mb-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            alt="Featured"
+                            className="object-cover w-20 h-20 rounded-lg"
                           />
+                        )}
+                        <div className="flex-1">
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) =>
-                              setImageFile(e.target.files?.[0] || null)
-                            }
-                            className="px-3 py-2 w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0] || null;
+                              setImageFile(file);
+                              if (file) {
+                                // Upload langsung saat pilih file
+                                const uploadedUrls = await uploadFiles([file]);
+                                if (uploadedUrls.length > 0) {
+                                  handleFormChange(
+                                    "featuredImage",
+                                    uploadedUrls[0]
+                                  );
+                                }
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                           />
                           <p className="mt-1 text-xs text-gray-500">
-                            JPG, PNG, or GIF. Max size 5MB. File upload will
-                            override URL.
+                            JPG, PNG, atau GIF. Maksimal 5MB.
                           </p>
                         </div>
                       </div>
@@ -792,7 +825,7 @@ const Articles: React.FC = () => {
                       >
                         {user?.role === "contributor"
                           ? "Submit for Review"
-                          : "Publish"}
+                          : "Save"}
                       </button>
                     </div>
                   </form>

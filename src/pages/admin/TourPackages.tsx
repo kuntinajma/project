@@ -315,7 +315,7 @@ const TourPackages: React.FC = () => {
                 pkg.image && pkg.image.includes("http")
                   ? pkg.image
                   : pkg.image
-                  ? `http://localhost:3005/api/files/upload/${pkg.image}`
+                  ? `http://localhost:5000/api/files/upload/${pkg.image}`
                   : "https://images.pexels.com/photos/1430676/pexels-photo-1430676.jpeg?auto=compress&cs=tinysrgb&w=800"
               }
               alt={pkg.name}

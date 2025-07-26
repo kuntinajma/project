@@ -39,12 +39,23 @@ const UMKM: React.FC = () => {
     whatsapp: "",
   });
 
+  // Tambahkan state untuk user msme baru
+  const [userForm, setUserForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [creatingUser, setCreatingUser] = useState(false);
+
   // API state and queries
   const [query, setQuery] = useState<MSMEQuery>({
     page: 1,
     limit: 12,
     search: "",
-    user_id: user?.role === "super_admin" ? undefined : user?.id?.toString(), // Super admin sees all, others see only their own
+    user_id:
+      user?.role === "superadmin" || user?.role === "admin"
+        ? undefined
+        : user?.id?.toString(), // Super admin sees all, others see only their own
   });
 
   // Hooks for API operations
@@ -119,6 +130,10 @@ const UMKM: React.FC = () => {
     }));
   };
 
+  const handleUserFormChange = (field: string, value: string) => {
+    setUserForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   const confirmDeleteMSME = async () => {
     if (!msmeToDelete || !token) return;
 
@@ -149,7 +164,30 @@ const UMKM: React.FC = () => {
       if (selectedMSME) {
         result = await updateMSME({ ...formData, id: selectedMSME.id }, token);
       } else {
-        result = await createMSME(formData, token);
+        // 1. Buat user msme baru
+        setCreatingUser(true);
+        const userRes = await fetch("/api/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: userForm.name,
+            email: userForm.email,
+            password: userForm.password,
+            role: "msme",
+          }),
+        });
+        const userData = await userRes.json();
+        setCreatingUser(false);
+        if (!userRes.ok || !userData.success) {
+          showToast("error", userData.message || "Gagal membuat user UMKM");
+          return;
+        }
+        const user_id = userData.data.id;
+        // 2. Buat UMKM dengan user_id baru
+        result = await createMSME({ ...formData, user_id }, token);
       }
 
       if (result.success) {
@@ -165,12 +203,14 @@ const UMKM: React.FC = () => {
           shopee: "",
           whatsapp: "",
         });
+        setUserForm({ name: "", email: "", password: "" });
         // Refresh MSMEs list
         setQuery((prev) => ({ ...prev }));
       } else {
         showToast("error", result.message || "Gagal menyimpan MSME");
       }
     } catch (error) {
+      setCreatingUser(false);
       console.error("Submit error:", error);
       showToast("error", "Terjadi kesalahan saat menyimpan MSME");
     }
@@ -187,50 +227,50 @@ const UMKM: React.FC = () => {
         <div className="flex space-x-4">
           <button
             onClick={handleAddMSME}
-            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+            className="flex items-center px-4 py-2 text-white bg-orange-600 rounded-lg hover:bg-orange-700"
           >
-            <PlusIcon className="h-5 w-5 mr-2" />
+            <PlusIcon className="w-5 h-5 mr-2" />
             Add MSME
           </button>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="p-6 bg-white rounded-lg shadow-md">
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <MagnifyingGlassIcon className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
           <input
             type="text"
             placeholder="Search by business name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-2 pl-10 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="flex-1 w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
       </div>
 
       {/* Loading State */}
       {msmesLoading && prevMSMEs.length === 0 && (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        <div className="py-8 text-center">
+          <div className="inline-block w-8 h-8 border-b-2 border-orange-600 rounded-full animate-spin"></div>
           <p className="mt-2 text-gray-600">Loading MSMEs...</p>
         </div>
       )}
 
       {/* Error State */}
       {msmesError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div className="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
           <p className="text-red-600">Error: {msmesError}</p>
         </div>
       )}
 
       {/* MSMEs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {displayMSMEs.map((msme) => (
-          <div key={msme.id} className="bg-white rounded-lg shadow-md p-6">
+          <div key={msme.id} className="p-6 bg-white rounded-lg shadow-md">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center">
-                <BuildingStorefrontIcon className="h-10 w-10 text-orange-600 mr-3" />
+                <BuildingStorefrontIcon className="w-10 h-10 mr-3 text-orange-600" />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     {msme.brand}
@@ -238,13 +278,13 @@ const UMKM: React.FC = () => {
                   <p className="text-sm text-gray-600">MSME Partner</p>
                 </div>
               </div>
-              <span className="flex items-center px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                <CheckCircleIcon className="h-4 w-4 mr-1" />
+              <span className="flex items-center px-2 py-1 text-xs text-green-800 bg-green-100 rounded-full">
+                <CheckCircleIcon className="w-4 h-4 mr-1" />
                 Active
               </span>
             </div>
 
-            <div className="space-y-2 mb-4">
+            <div className="mb-4 space-y-2">
               <p className="text-sm text-gray-600">
                 <span className="font-medium">Phone:</span> {msme.phone}
               </p>
@@ -266,7 +306,7 @@ const UMKM: React.FC = () => {
               )}
             </div>
 
-            <p className="text-sm text-gray-700 mb-4 line-clamp-2">
+            <p className="mb-4 text-sm text-gray-700 line-clamp-2">
               {msme.description}
             </p>
 
@@ -275,14 +315,14 @@ const UMKM: React.FC = () => {
                 onClick={() => handleEditMSME(msme)}
                 className="flex items-center px-3 py-1 text-orange-600 border border-orange-600 rounded hover:bg-orange-50"
               >
-                <PencilIcon className="h-4 w-4 mr-1" />
+                <PencilIcon className="w-4 h-4 mr-1" />
                 Edit
               </button>
               <button
                 onClick={() => handleDeleteMSME(msme)}
                 className="flex items-center px-3 py-1 text-red-600 border border-red-600 rounded hover:bg-red-50"
               >
-                <TrashIcon className="h-4 w-4 mr-1" />
+                <TrashIcon className="w-4 h-4 mr-1" />
                 Delete
               </button>
             </div>
@@ -292,12 +332,12 @@ const UMKM: React.FC = () => {
 
       {/* Empty State */}
       {!msmesLoading && displayMSMEs.length === 0 && (
-        <div className="text-center py-12">
-          <BuildingStorefrontIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="py-12 text-center">
+          <BuildingStorefrontIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+          <h3 className="mb-2 text-lg font-medium text-gray-900">
             No MSMEs found
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="mb-4 text-gray-600">
             {searchTerm
               ? "Try adjusting your search terms."
               : "Get started by adding your first MSME."}
@@ -305,9 +345,9 @@ const UMKM: React.FC = () => {
           {!searchTerm && (
             <button
               onClick={handleAddMSME}
-              className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              className="inline-flex items-center px-4 py-2 text-white bg-orange-600 rounded-lg hover:bg-orange-700"
             >
-              <PlusIcon className="h-5 w-5 mr-2" />
+              <PlusIcon className="w-5 h-5 mr-2" />
               Add First MSME
             </button>
           )}
@@ -334,7 +374,7 @@ const UMKM: React.FC = () => {
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <div className="flex items-center justify-center min-h-full p-4 text-center">
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -344,18 +384,66 @@ const UMKM: React.FC = () => {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-2xl p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                    className="mb-4 text-lg font-medium leading-6 text-gray-900"
                   >
                     {selectedMSME ? "Edit MSME" : "Add New MSME"}
                   </Dialog.Title>
 
                   <form onSubmit={handleSubmitMSME} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Input user msme hanya saat tambah, bukan edit */}
+                    {!selectedMSME && (
+                      <div className="grid grid-cols-1 gap-4 pb-4 mb-4 border-b md:grid-cols-3">
+                        <div>
+                          <label className="block mb-1 text-sm font-medium text-gray-700">
+                            Nama Pemilik UMKM *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={userForm.name}
+                            onChange={(e) =>
+                              handleUserFormChange("name", e.target.value)
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block mb-1 text-sm font-medium text-gray-700">
+                            Email User UMKM *
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            value={userForm.email}
+                            onChange={(e) =>
+                              handleUserFormChange("email", e.target.value)
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block mb-1 text-sm font-medium text-gray-700">
+                            Password User UMKM *
+                          </label>
+                          <input
+                            type="password"
+                            required
+                            value={userForm.password}
+                            onChange={(e) =>
+                              handleUserFormChange("password", e.target.value)
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block mb-1 text-sm font-medium text-gray-700">
                           Brand Name *
                         </label>
                         <input
@@ -370,7 +458,7 @@ const UMKM: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block mb-1 text-sm font-medium text-gray-700">
                           Phone Number *
                         </label>
                         <input
@@ -386,7 +474,7 @@ const UMKM: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block mb-1 text-sm font-medium text-gray-700">
                         Description *
                       </label>
                       <textarea
@@ -400,9 +488,9 @@ const UMKM: React.FC = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block mb-1 text-sm font-medium text-gray-700">
                           WhatsApp
                         </label>
                         <input
@@ -417,7 +505,7 @@ const UMKM: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block mb-1 text-sm font-medium text-gray-700">
                           Instagram
                         </label>
                         <input
@@ -432,7 +520,7 @@ const UMKM: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block mb-1 text-sm font-medium text-gray-700">
                           Shopee Store
                         </label>
                         <input
@@ -447,7 +535,7 @@ const UMKM: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex justify-end space-x-4 pt-4">
+                    <div className="flex justify-end pt-4 space-x-4">
                       <button
                         type="button"
                         onClick={() => setIsModalOpen(false)}
@@ -457,11 +545,11 @@ const UMKM: React.FC = () => {
                       </button>
                       <button
                         type="submit"
-                        disabled={crudLoading}
+                        disabled={crudLoading || creatingUser}
                         className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50"
                       >
-                        {crudLoading
-                          ? "Saving..."
+                        {creatingUser
+                          ? "Creating User..."
                           : selectedMSME
                           ? "Update"
                           : "Create"}

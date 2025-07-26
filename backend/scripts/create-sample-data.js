@@ -169,13 +169,50 @@ async function createSampleData() {
       );
     }
 
-    // Get MSME user ID
-    const [msmeUser] = await pool.execute(
-      'SELECT id FROM users WHERE role = "msme" LIMIT 1'
-    );
-    const msmeUserId = msmeUser[0].id;
+    // Create sample MSME users
+    const msmeUsers = [
+      {
+        name: "UMKM Laiya 1",
+        email: "umkm1@laiya.com",
+        password: defaultPassword,
+        role: "msme",
+        phone: "+6281111111111",
+        is_verified: true,
+      },
+      {
+        name: "UMKM Laiya 2",
+        email: "umkm2@laiya.com",
+        password: defaultPassword,
+        role: "msme",
+        phone: "+6282222222222",
+        is_verified: true,
+      },
+      {
+        name: "UMKM Laiya 3",
+        email: "umkm3@laiya.com",
+        password: defaultPassword,
+        role: "msme",
+        phone: "+6283333333333",
+        is_verified: true,
+      },
+    ];
+    const msmeUserIds = [];
+    for (const user of msmeUsers) {
+      const [result] = await pool.execute(
+        `INSERT INTO users (name, email, password, role, phone, is_verified) VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          user.name,
+          user.email,
+          user.password,
+          user.role,
+          user.phone,
+          user.is_verified,
+        ]
+      );
+      msmeUserIds.push(result.insertId);
+    }
 
-    // Create sample MSMEs using correct table structure
+    // Create sample MSMEs using different user_id for each
     const msmeData = [
       {
         brand: "UD Laiya",
@@ -185,7 +222,7 @@ async function createSampleData() {
         instagram: "https://instagram.com/laiya/",
         shopee: "https://shopee.co.id/seller/laiya",
         whatsapp: "09877631132",
-        user_id: msmeUserId,
+        user_id: msmeUserIds[0],
       },
       {
         brand: "Kerajinan Tangan Laiya",
@@ -195,7 +232,7 @@ async function createSampleData() {
         instagram: "kerajinan_laiya",
         shopee: "https://shopee.co.id/kerajinan-laiya",
         whatsapp: "+62 812-3456-7890",
-        user_id: msmeUserId,
+        user_id: msmeUserIds[1],
       },
       {
         brand: "Kuliner Seafood Laiya",
@@ -205,7 +242,7 @@ async function createSampleData() {
         instagram: "seafood_laiya",
         shopee: "https://shopee.co.id/seafood-laiya",
         whatsapp: "+62 813-4567-8901",
-        user_id: msmeUserId,
+        user_id: msmeUserIds[2],
       },
     ];
 

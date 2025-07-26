@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { MSME } from "./useMSMECRUD";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3005/api";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export interface MSMEQuery {
   page?: number;
