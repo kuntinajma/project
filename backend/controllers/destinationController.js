@@ -343,15 +343,10 @@ const deleteDestination = async (req, res) => {
       }
     }
 
-    // Tambahkan file galeri lama yang tidak ada di gallery baru
-    if (Array.isArray(gallery)) {
-      oldGallery.forEach((file) => {
-        filesToDelete.push(file);
-      });
-    } else {
-      // Jika gallery baru null/unset, hapus semua galeri lama
-      filesToDelete.push(...oldGallery);
-    }
+    // Add all gallery files to delete list
+    oldGallery.forEach((file) => {
+      filesToDelete.push(file);
+    });
 
     // do deleting
     const [result] = await pool.execute(

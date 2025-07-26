@@ -142,25 +142,50 @@ const Destinations: React.FC = () => {
   };
 
   const confirmDeleteDestination = async () => {
+    if (!destinationToDelete || !token) {
+      showToast("error", "Gagal menghapus: Data tidak valid atau sesi berakhir");
+      setIsDeleteDialogOpen(false);
+      return;
+    }
+
     try {
-      const res = await deleteDestination(
-        destinationToDelete?.id ?? "",
-        token ?? ""
-      );
-      if (res.success) {
-        setQuery((prev) => ({ ...prev })); // trigger refetch
-      }
-    } catch (err) {
-      console.error("Delete failed:", err);
-    } finally {
-      setTimeout(() => {
-        showToast(
-          "success",
-          `Destinasi ${destinationToDelete?.title} berhasil dihapus`
-        );
+      console.log(`Deleting destination with ID: ${destinationToDelete.id}`);
+      
+      // Check if ID is valid
+      if (!destinationToDelete.id || destinationToDelete.id.trim() === "") {
+        showToast("error", "ID destinasi tidak valid");
         setIsDeleteDialogOpen(false);
         setDestinationToDelete(null);
-      }, 500);
+        return;
+      }
+      
+      // Log token information (first few characters)
+      console.log(`Using token: ${token.substring(0, 10)}...`);
+      
+      const res = await deleteDestination(destinationToDelete.id, token);
+      console.log("Delete API response:", res);
+      
+      if (res && res.success) {
+        showToast(
+          "success",
+          `Destinasi ${destinationToDelete.title} berhasil dihapus`
+        );
+        // Wait a moment before refreshing the list
+        setTimeout(() => {
+          setQuery((prev) => ({ ...prev })); // trigger refetch
+        }, 500);
+      } else {
+        // Show detailed error message
+        const errorMsg = res?.message || "Unknown error";
+        console.error("Delete error details:", errorMsg);
+        showToast("error", `Gagal menghapus: ${errorMsg}`);
+      }
+    } catch (err) {
+      console.error("Delete exception:", err);
+      showToast("error", `Error saat menghapus: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDestinationToDelete(null);
     }
   };
 

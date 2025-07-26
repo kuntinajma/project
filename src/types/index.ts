@@ -98,11 +98,18 @@ export interface Testimonial {
 }
 
 export interface Transportation {
-  id: string;
+  id: string | number;
   name: string;
+  type: "speedboat" | "boat" | "ferry";
   phone: string;
+  whatsapp?: string;
   departureTime: string;
   dockLocation: string;
+  capacity?: number;
+  pricePerPerson?: number;
+  duration: string;
+  status: "active" | "inactive";
+  notes?: string;
 }
 
 export interface Amenity {

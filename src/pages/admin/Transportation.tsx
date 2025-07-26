@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -14,100 +14,208 @@ import { Fragment } from 'react';
 import Toast from '../../components/common/Toast';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { useToast } from '../../hooks/useToast';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import useTransportation, { TransportationQuery } from '../../hooks/useTransportation';
+import { useTransportationCRUD } from '../../hooks/useTransportationCRUD';
+import { Transportation as TransportationType } from '../../types';
 
 const Transportation: React.FC = () => {
+  const { token, isAuthenticated, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedTransport, setSelectedTransport] = useState<any>(null);
-  const [transportToDelete, setTransportToDelete] = useState<any>(null);
+  const [selectedTransport, setSelectedTransport] = useState<TransportationType | null>(null);
+  const [transportToDelete, setTransportToDelete] = useState<TransportationType | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const { toast, showToast, hideToast } = useToast();
-
-  const transportations = [
-    { 
-      id: 1, 
-      name: 'Laiya Express', 
-      type: 'speedboat',
-      phone: '+62 812-3456-7890',
-      whatsapp: '+62 812-3456-7890',
-      departureTime: '08:00, 14:00',
-      dockLocation: 'Pelabuhan Bulukumba',
-      capacity: 25,
-      pricePerPerson: 150000,
-      duration: '45 minutes',
-      status: 'active'
-    },
-    { 
-      id: 2, 
-      name: 'Island Hopper', 
-      type: 'boat',
-      phone: '+62 812-3456-7891',
-      whatsapp: '+62 812-3456-7891',
-      departureTime: '09:00, 15:00',
-      dockLocation: 'Pelabuhan Bulukumba',
-      capacity: 40,
-      pricePerPerson: 100000,
-      duration: '1 hour',
-      status: 'active'
-    },
-    { 
-      id: 3, 
-      name: 'Ocean Rider', 
-      type: 'ferry',
-      phone: '+62 812-3456-7892',
-      whatsapp: '+62 812-3456-7892',
-      departureTime: '10:00, 16:00',
-      dockLocation: 'Pelabuhan Bulukumba',
-      capacity: 60,
-      pricePerPerson: 80000,
-      duration: '1.5 hours',
-      status: 'inactive'
-    },
-  ];
-
-  const filteredTransportations = transportations.filter(transport => {
-    const matchesSearch = transport.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transport.dockLocation.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || transport.type === filterType;
-    return matchesSearch && matchesType;
+  const [prevTransportations, setPrevTransportations] = useState<TransportationType[]>([]);
+  const [query, setQuery] = useState<TransportationQuery>({
+    page: 1,
+    limit: 10,
+    type: undefined,
+    search: "",
   });
+
+  // Check authentication
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      console.log("User not authenticated, redirecting to login");
+      showToast("error", "Anda harus login untuk mengakses halaman ini");
+      navigate("/login");
+    }
+  }, [isAuthenticated, authLoading, navigate, showToast]);
+
+  // Fetch transportation data
+  const { transportations, pagination, loading } = useTransportation(query);
+  
+  // CRUD operations
+  const { 
+    createTransportation, 
+    updateTransportation, 
+    deleteTransportation,
+    toggleTransportationStatus
+  } = useTransportationCRUD();
+
+  // Update search query with debounce
+  useEffect(() => {
+    if (searchTerm === query.search) return;
+
+    const handler = setTimeout(() => {
+      setQuery((prev) => ({
+        ...prev,
+        search: searchTerm,
+        page: 1,
+      }));
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [query.search, searchTerm]);
+
+  // Save previous data for better UX during loading
+  useEffect(() => {
+    if (transportations.length > 0) {
+      setPrevTransportations(transportations);
+    }
+  }, [transportations]);
+
+  // Use previous data when loading
+  const transportationList = loading ? prevTransportations : transportations;
+
+  const handleFilterChange = (type: string) => {
+    setFilterType(type);
+    setQuery((prev) => ({
+      ...prev,
+      type: type === 'all' ? undefined : type,
+      page: 1,
+    }));
+  };
 
   const handleAddTransport = () => {
     setSelectedTransport(null);
     setIsModalOpen(true);
   };
 
-  const handleEditTransport = (transport: any) => {
+  const handleEditTransport = (transport: TransportationType) => {
     setSelectedTransport(transport);
     setIsModalOpen(true);
   };
 
-  const handleDeleteTransport = (transport: any) => {
+  const handleDeleteTransport = (transport: TransportationType) => {
     setTransportToDelete(transport);
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDeleteTransport = () => {
-    setTimeout(() => {
-      showToast('success', `Transportasi ${transportToDelete.name} berhasil dihapus`);
+  const confirmDeleteTransport = async () => {
+    if (!transportToDelete || !token) {
+      showToast("error", "Gagal menghapus: Data tidak valid atau sesi berakhir");
+      setIsDeleteDialogOpen(false);
+      return;
+    }
+
+    try {
+      console.log(`Deleting transportation with ID: ${transportToDelete.id}`);
+      const res = await deleteTransportation(transportToDelete.id, token);
+      
+      if (res && res.success) {
+        showToast(
+          "success",
+          `Transportasi ${transportToDelete.name} berhasil dihapus`
+        );
+        // Refresh the list
+        setQuery((prev) => ({ ...prev }));
+      } else {
+        const errorMsg = res?.message || "Unknown error";
+        console.error("Delete error details:", errorMsg);
+        showToast("error", `Gagal menghapus: ${errorMsg}`);
+      }
+    } catch (err) {
+      console.error("Delete exception:", err);
+      showToast("error", `Error saat menghapus: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsDeleteDialogOpen(false);
       setTransportToDelete(null);
-    }, 500);
+    }
   };
 
-  const handleSubmitTransport = (e: React.FormEvent) => {
+  const handleSubmitTransport = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTimeout(() => {
-      const action = selectedTransport ? 'diperbarui' : 'dibuat';
-      showToast('success', `Transportasi berhasil ${action}`);
-      setIsModalOpen(false);
-      setSelectedTransport(null);
-    }, 500);
+    
+    if (!token) {
+      showToast("error", "Anda belum login atau sesi telah berakhir. Silakan login kembali.");
+      return;
+    }
+    
+    // Get form data
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
+    const transportData = {
+      name: formData.get('name') as string,
+      type: formData.get('type') as "speedboat" | "boat" | "ferry",
+      phone: formData.get('phone') as string,
+      whatsapp: formData.get('whatsapp') as string || undefined,
+      departureTime: formData.get('departureTime') as string,
+      dockLocation: formData.get('dockLocation') as string,
+      capacity: parseInt(formData.get('capacity') as string) || undefined,
+      pricePerPerson: parseInt(formData.get('pricePerPerson') as string) || undefined,
+      duration: formData.get('duration') as string,
+      status: formData.get('status') as "active" | "inactive",
+      notes: formData.get('notes') as string || undefined
+    };
+    
+    try {
+      let res;
+      
+      if (selectedTransport) {
+        // Update existing transportation
+        res = await updateTransportation(selectedTransport.id, transportData, token);
+      } else {
+        // Create new transportation
+        res = await createTransportation(transportData as Omit<TransportationType, "id">, token);
+      }
+      
+      if (res && res.success) {
+        const action = selectedTransport ? 'diperbarui' : 'dibuat';
+        showToast('success', `Transportasi berhasil ${action}`);
+        setIsModalOpen(false);
+        setSelectedTransport(null);
+        // Refresh the list
+        setQuery((prev) => ({ ...prev }));
+      } else {
+        const errorMsg = res?.message || "Unknown error";
+        showToast("error", `Gagal ${selectedTransport ? 'memperbarui' : 'membuat'} transportasi: ${errorMsg}`);
+      }
+    } catch (err) {
+      console.error("Submit transportation error:", err);
+      showToast("error", `Error: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
   };
 
-  const handleToggleStatus = (transport: any) => {
+  const handleToggleStatus = async (transport: TransportationType) => {
+    if (!token) {
+      showToast("error", "Anda belum login atau sesi telah berakhir. Silakan login kembali.");
+      return;
+    }
+    
     const newStatus = transport.status === 'active' ? 'inactive' : 'active';
-    showToast('success', `Status transportasi ${transport.name} berhasil diubah menjadi ${newStatus}`);
+    
+    try {
+      const res = await toggleTransportationStatus(transport.id, newStatus, token);
+      
+      if (res && res.success) {
+        showToast('success', `Status transportasi ${transport.name} berhasil diubah menjadi ${newStatus}`);
+        // Refresh the list
+        setQuery((prev) => ({ ...prev }));
+      } else {
+        const errorMsg = res?.message || "Unknown error";
+        showToast("error", `Gagal mengubah status: ${errorMsg}`);
+      }
+    } catch (err) {
+      console.error("Toggle status error:", err);
+      showToast("error", `Error: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -170,7 +278,7 @@ const Transportation: React.FC = () => {
           <div className="flex items-center space-x-4">
             <select
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              onChange={(e) => handleFilterChange(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             >
               <option value="all">All Types</option>
@@ -184,7 +292,22 @@ const Transportation: React.FC = () => {
 
       {/* Transportation Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTransportations.map((transport) => (
+        {loading && transportationList.length === 0 && (
+          <div className="col-span-3 text-center py-8">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-1/4 mx-auto mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3 mx-auto"></div>
+            </div>
+          </div>
+        )}
+        
+        {!loading && transportationList.length === 0 && (
+          <div className="col-span-3 text-center py-8">
+            <p className="text-gray-500">No transportation found. Add your first transportation!</p>
+          </div>
+        )}
+        
+        {transportationList.map((transport) => (
           <div key={transport.id} className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -194,12 +317,16 @@ const Transportation: React.FC = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{transport.name}</h3>
                   <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(transport.type)}`}>
-                      {transport.type}
-                    </span>
-                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(transport.status)}`}>
-                      {transport.status}
-                    </span>
+                    {transport.type && (
+                      <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(transport.type)}`}>
+                        {transport.type}
+                      </span>
+                    )}
+                    {transport.status && (
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(transport.status)}`}>
+                        {transport.status}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -218,14 +345,18 @@ const Transportation: React.FC = () => {
                 <span className="text-gray-600">Dock:</span>
                 <span className="font-medium">{transport.dockLocation}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Capacity:</span>
-                <span className="font-medium">{transport.capacity} persons</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Price:</span>
-                <span className="font-medium text-orange-600">{formatPrice(transport.pricePerPerson)}</span>
-              </div>
+              {transport.capacity && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Capacity:</span>
+                  <span className="font-medium">{transport.capacity} persons</span>
+                </div>
+              )}
+              {transport.pricePerPerson && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Price:</span>
+                  <span className="font-medium text-orange-600">{formatPrice(transport.pricePerPerson)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Duration:</span>
                 <span className="font-medium">{transport.duration}</span>
@@ -233,9 +364,13 @@ const Transportation: React.FC = () => {
             </div>
             
             <div className="flex space-x-2">
-              <button className="flex items-center justify-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors">
-                <EyeIcon className="h-4 w-4 mr-1" />
-                <span className="text-sm font-medium">View</span>
+              <button 
+                onClick={() => handleToggleStatus(transport)}
+                className="flex items-center justify-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+              >
+                <span className="text-sm font-medium">
+                  {transport.status === 'active' ? 'Deactivate' : 'Activate'}
+                </span>
               </button>
               <button 
                 onClick={() => handleEditTransport(transport)}
@@ -255,6 +390,48 @@ const Transportation: React.FC = () => {
           </div>
         ))}
       </div>
+      
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="bg-white shadow-md rounded-lg p-4 mt-6">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-600">
+              Page {pagination.currentPage} of {pagination.totalPages}
+            </p>
+
+            <div className="flex gap-2 items-center">
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                value={query.limit}
+                onChange={(e) => {
+                  const newLimit = parseInt(e.target.value);
+                  setQuery({ ...query, page: 1, limit: newLimit });
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+
+              <button
+                disabled={query.page <= 1}
+                onClick={() => setQuery({ ...query, page: query.page - 1 })}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <button
+                disabled={query.page >= pagination.totalPages}
+                onClick={() => setQuery({ ...query, page: query.page + 1 })}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Transportation Modal */}
       <Transition appear show={isModalOpen} as={Fragment}>
@@ -292,6 +469,7 @@ const Transportation: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Boat/Ship Name</label>
                       <input
                         type="text"
+                        name="name"
                         defaultValue={selectedTransport?.name || ''}
                         placeholder="e.g., Laiya Express"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -303,6 +481,7 @@ const Transportation: React.FC = () => {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
                         <select
+                          name="type"
                           defaultValue={selectedTransport?.type || 'boat'}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                           required
@@ -316,6 +495,7 @@ const Transportation: React.FC = () => {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <select
+                          name="status"
                           defaultValue={selectedTransport?.status || 'active'}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                         >
@@ -330,6 +510,7 @@ const Transportation: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                         <input
                           type="tel"
+                          name="phone"
                           defaultValue={selectedTransport?.phone || ''}
                           placeholder="+62 812-3456-7890"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -341,6 +522,7 @@ const Transportation: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
                         <input
                           type="tel"
+                          name="whatsapp"
                           defaultValue={selectedTransport?.whatsapp || ''}
                           placeholder="+62 812-3456-7890"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -352,6 +534,7 @@ const Transportation: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Departure Times</label>
                       <input
                         type="text"
+                        name="departureTime"
                         defaultValue={selectedTransport?.departureTime || ''}
                         placeholder="08:00, 14:00, 20:00"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -364,6 +547,7 @@ const Transportation: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Dock Location</label>
                       <input
                         type="text"
+                        name="dockLocation"
                         defaultValue={selectedTransport?.dockLocation || ''}
                         placeholder="Pelabuhan Bulukumba"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -376,6 +560,7 @@ const Transportation: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Capacity (persons)</label>
                         <input
                           type="number"
+                          name="capacity"
                           defaultValue={selectedTransport?.capacity || ''}
                           placeholder="25"
                           min="1"
@@ -387,6 +572,7 @@ const Transportation: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Price per Person (IDR)</label>
                         <input
                           type="number"
+                          name="pricePerPerson"
                           defaultValue={selectedTransport?.pricePerPerson || ''}
                           placeholder="150000"
                           min="0"
@@ -398,9 +584,11 @@ const Transportation: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
                         <input
                           type="text"
+                          name="duration"
                           defaultValue={selectedTransport?.duration || ''}
                           placeholder="45 minutes"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          required
                         />
                       </div>
                     </div>
@@ -408,7 +596,9 @@ const Transportation: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes (Optional)</label>
                       <textarea
+                        name="notes"
                         rows={3}
+                        defaultValue={selectedTransport?.notes || ''}
                         placeholder="Safety equipment provided, weather dependent schedule, etc."
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       />
